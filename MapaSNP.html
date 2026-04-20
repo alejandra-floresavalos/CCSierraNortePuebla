@@ -1,0 +1,4499 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <link rel="stylesheet" href="css/leaflet.css">
+        <link rel="stylesheet" href="css/L.Control.Layers.Tree.css">
+        <link rel="stylesheet" href="css/qgis2web.css">
+        <link rel="stylesheet" href="css/fontawesome-all.min.css">
+        <link rel="stylesheet" href="css/leaflet-search.css">
+        <link rel="stylesheet" href="css/leaflet.photon.css">
+        <link rel="stylesheet" href="css/leaflet-measure.css">
+        <style>
+        html, body, #map {
+            width: 100%;
+            height: 100%;
+            padding: 0;
+            margin: 0;
+        }
+        </style>
+        <title>Captura de Carbono Sierra Norte Puebla</title>
+    </head>
+    <body>
+        <div id="map">
+        </div>
+        <script src="js/qgis2web_expressions.js"></script>
+        <script src="js/leaflet.js"></script>
+        <script src="js/L.Control.Layers.Tree.min.js"></script>
+        <script src="js/leaflet.rotatedMarker.js"></script>
+        <script src="js/leaflet.pattern.js"></script>
+        <script src="js/leaflet-hash.js"></script>
+        <script src="js/Autolinker.min.js"></script>
+        <script src="js/rbush.min.js"></script>
+        <script src="js/labelgun.min.js"></script>
+        <script src="js/labels.js"></script>
+        <script src="js/leaflet.photon.js"></script>
+        <script src="js/leaflet-measure.js"></script>
+        <script src="js/leaflet-search.js"></script>
+        <script src="data/AreasdeProyecto_0.js"></script>
+        <script src="data/reasdecorta_2.js"></script>
+        <script src="data/Parcelas_3.js"></script>
+        <script src="data/reasdecorta_4.js"></script>
+        <script src="data/Parcelas_5.js"></script>
+        <script src="data/reasdecorta_6.js"></script>
+        <script src="data/Parcelas_7.js"></script>
+        <script src="data/reasdecorta_8.js"></script>
+        <script src="data/Parcelas_9.js"></script>
+        <script src="data/reasdecorta_10.js"></script>
+        <script src="data/Parcelas_11.js"></script>
+        <script src="data/reasdecorta_12.js"></script>
+        <script src="data/Parcelas_13.js"></script>
+        <script src="data/reasdecorta_14.js"></script>
+        <script src="data/Parcelas_15.js"></script>
+        <script src="data/reasdecorta_16.js"></script>
+        <script src="data/Parcelas_17.js"></script>
+        <script src="data/reasdecorta_18.js"></script>
+        <script src="data/Parcelas_19.js"></script>
+        <script src="data/reasdecorta_20.js"></script>
+        <script src="data/Parcela_21.js"></script>
+        <script src="data/reasdecorta_22.js"></script>
+        <script src="data/Parcelas_23.js"></script>
+        <script src="data/reasdecorta_24.js"></script>
+        <script src="data/Parcelas_25.js"></script>
+        <script src="data/AreasdeCorta_26.js"></script>
+        <script src="data/Parcelas_27.js"></script>
+        <script src="data/Areasdecorta_28.js"></script>
+        <script src="data/Parcelas_29.js"></script>
+        <script>
+        var highlightLayer;
+        function highlightFeature(e) {
+            highlightLayer = e.target;
+
+            if (e.target.feature.geometry.type === 'LineString' || e.target.feature.geometry.type === 'MultiLineString') {
+              highlightLayer.setStyle({
+                color: 'rgba(0, 214, 255, 1.00)',
+              });
+            } else {
+              highlightLayer.setStyle({
+                fillColor: 'rgba(0, 214, 255, 1.00)',
+                fillOpacity: 1
+              });
+            }
+        }
+        var map = L.map('map', {
+            zoomControl:false, maxZoom:28, minZoom:1
+        })
+        var hash = new L.Hash(map);
+        map.attributionControl.setPrefix('<a href="https://github.com/tomchadwin/qgis2web" target="_blank">qgis2web</a> &middot; <a href="https://leafletjs.com" title="A JS library for interactive maps">Leaflet</a> &middot; <a href="https://qgis.org">QGIS</a>');
+        var autolinker = new Autolinker({truncate: {length: 30, location: 'smart'}});
+        // remove popup's row if "visible-with-data"
+        function removeEmptyRowsFromPopupContent(content, feature) {
+         var tempDiv = document.createElement('div');
+         tempDiv.innerHTML = content;
+         var rows = tempDiv.querySelectorAll('tr');
+         for (var i = 0; i < rows.length; i++) {
+             var td = rows[i].querySelector('td.visible-with-data');
+             var key = td ? td.id : '';
+             if (td && td.classList.contains('visible-with-data') && feature.properties[key] == null) {
+                 rows[i].parentNode.removeChild(rows[i]);
+             }
+         }
+         return tempDiv.innerHTML;
+        }
+        // modify popup if contains media
+        function addClassToPopupIfMedia(content, popup) {
+            var tempDiv = document.createElement('div');
+            tempDiv.innerHTML = content;
+            var imgTd = tempDiv.querySelector('td img');
+            if (imgTd) {
+                var src = imgTd.getAttribute('src');
+                if (/\.(jpg|jpeg|png|gif|bmp|webp|avif)$/i.test(src)) {
+                    popup._contentNode.classList.add('media');
+                    setTimeout(function() {
+                        popup.update();
+                    }, 10);
+                } else if (/\.(mp3|wav|ogg|aac)$/i.test(src)) {
+                    var audio = document.createElement('audio');
+                    audio.controls = true;
+                    audio.src = src;
+                    imgTd.parentNode.replaceChild(audio, imgTd);
+                    popup._contentNode.classList.add('media');
+                    setTimeout(function() {
+                        popup.setContent(tempDiv.innerHTML);
+                        popup.update();
+                    }, 10);
+                } else if (/\.(mp4|webm|ogg|mov)$/i.test(src)) {
+                    var video = document.createElement('video');
+                    video.controls = true;
+                    video.src = src;
+                    video.style.width = "400px";
+                    video.style.height = "300px";
+                    video.style.maxHeight = "60vh";
+                    video.style.maxWidth = "60vw";
+                    imgTd.parentNode.replaceChild(video, imgTd);
+                    popup._contentNode.classList.add('media');
+                    // Aggiorna il popup quando il video carica i metadati
+                    video.addEventListener('loadedmetadata', function() {
+                        popup.update();
+                    });
+                    setTimeout(function() {
+                        popup.setContent(tempDiv.innerHTML);
+                        popup.update();
+                    }, 10);
+                } else {
+                    popup._contentNode.classList.remove('media');
+                }
+            } else {
+                popup._contentNode.classList.remove('media');
+            }
+        }
+        var title = new L.Control({'position':'bottomright'});
+        title.onAdd = function (map) {
+            this._div = L.DomUtil.create('div', 'info');
+            this.update();
+            return this._div;
+        };
+        title.update = function () {
+            this._div.innerHTML = '<h2>Captura de Carbono Sierra Norte Puebla</h2>';
+        };
+        title.addTo(map);
+        var zoomControl = L.control.zoom({
+            position: 'topleft'
+        }).addTo(map);
+        var measureControl = new L.Control.Measure({
+            position: 'topleft',
+            primaryLengthUnit: 'meters',
+            secondaryLengthUnit: 'kilometers',
+            primaryAreaUnit: 'sqmeters',
+            secondaryAreaUnit: 'hectares'
+        });
+        measureControl.addTo(map);
+        document.getElementsByClassName('leaflet-control-measure-toggle')[0].innerHTML = '';
+        document.getElementsByClassName('leaflet-control-measure-toggle')[0].className += ' fas fa-ruler';
+        var bounds_group = new L.featureGroup([]);
+        function setBounds() {
+            if (bounds_group.getLayers().length) {
+                map.fitBounds(bounds_group.getBounds());
+            }
+        }
+        function pop_AreasdeProyecto_0(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    for (var i in e.target._eventParents) {
+                        if (typeof e.target._eventParents[i].resetStyle === 'function') {
+                            e.target._eventParents[i].resetStyle(e.target);
+                        }
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+            var popupContent = '<table>\
+                    <tr>\
+                        <th scope="row">Predio</th>\
+                        <td>' + (feature.properties['Predio'] !== null ? autolinker.link(String(feature.properties['Predio']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Superficie</th>\
+                        <td>' + (feature.properties['Superficie'] !== null ? autolinker.link(String(feature.properties['Superficie']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_AreasdeProyecto_0_0() {
+            return {
+                pane: 'pane_AreasdeProyecto_0',
+                opacity: 1,
+                color: 'rgba(29,235,43,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 3.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(0,0,0,1.0)',
+                interactive: true,
+            }
+        }
+        map.createPane('pane_AreasdeProyecto_0');
+        map.getPane('pane_AreasdeProyecto_0').style.zIndex = 400;
+        map.getPane('pane_AreasdeProyecto_0').style['mix-blend-mode'] = 'normal';
+        var layer_AreasdeProyecto_0 = new L.geoJson(json_AreasdeProyecto_0, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_AreasdeProyecto_0',
+            layerName: 'layer_AreasdeProyecto_0',
+            pane: 'pane_AreasdeProyecto_0',
+            onEachFeature: pop_AreasdeProyecto_0,
+            style: style_AreasdeProyecto_0_0,
+        });
+        bounds_group.addLayer(layer_AreasdeProyecto_0);
+        map.addLayer(layer_AreasdeProyecto_0);
+        map.createPane('pane_GoogleSatellite_1');
+        map.getPane('pane_GoogleSatellite_1').style.zIndex = 401;
+        var layer_GoogleSatellite_1 = L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+            pane: 'pane_GoogleSatellite_1',
+            opacity: 0.5,
+            attribution: '<a href="https://www.google.at/permissions/geoguidelines/attr-guide.html">Map data ©2015 Google</a>',
+            minZoom: 1,
+            maxZoom: 28,
+            minNativeZoom: 0,
+            maxNativeZoom: 20
+        });
+        layer_GoogleSatellite_1;
+        map.addLayer(layer_GoogleSatellite_1);
+        function pop_reasdecorta_2(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    for (var i in e.target._eventParents) {
+                        if (typeof e.target._eventParents[i].resetStyle === 'function') {
+                            e.target._eventParents[i].resetStyle(e.target);
+                        }
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2"><strong>Año</strong><br />' + (feature.properties['Año'] !== null ? autolinker.link(String(feature.properties['Año']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_reasdecorta_2_0(feature) {
+            switch(String(feature.properties['Año'])) {
+                case '2013':
+                    return {
+                pane: 'pane_reasdecorta_2',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(206,89,85,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2014':
+                    return {
+                pane: 'pane_reasdecorta_2',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(209,223,104,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2015':
+                    return {
+                pane: 'pane_reasdecorta_2',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(212,137,40,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2016':
+                    return {
+                pane: 'pane_reasdecorta_2',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(213,60,227,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2017':
+                    return {
+                pane: 'pane_reasdecorta_2',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(167,132,222,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2018':
+                    return {
+                pane: 'pane_reasdecorta_2',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(125,143,234,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2019':
+                    return {
+                pane: 'pane_reasdecorta_2',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(138,230,92,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2020':
+                    return {
+                pane: 'pane_reasdecorta_2',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(19,225,61,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2021':
+                    return {
+                pane: 'pane_reasdecorta_2',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(220,123,173,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2022':
+                    return {
+                pane: 'pane_reasdecorta_2',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(70,173,214,0.3)',
+                interactive: true,
+            }
+                    break;
+            }
+        }
+        map.createPane('pane_reasdecorta_2');
+        map.getPane('pane_reasdecorta_2').style.zIndex = 402;
+        map.getPane('pane_reasdecorta_2').style['mix-blend-mode'] = 'normal';
+        var layer_reasdecorta_2 = new L.geoJson(json_reasdecorta_2, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_reasdecorta_2',
+            layerName: 'layer_reasdecorta_2',
+            pane: 'pane_reasdecorta_2',
+            onEachFeature: pop_reasdecorta_2,
+            style: style_reasdecorta_2_0,
+        });
+        bounds_group.addLayer(layer_reasdecorta_2);
+        map.addLayer(layer_reasdecorta_2);
+        function pop_Parcelas_3(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    for (var i in e.target._eventParents) {
+                        if (typeof e.target._eventParents[i].resetStyle === 'function') {
+                            e.target._eventParents[i].resetStyle(e.target);
+                        }
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2"><strong>Parcela</strong><br />' + (feature.properties['Parcela'] !== null ? autolinker.link(String(feature.properties['Parcela']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_Parcelas_3_0() {
+            return {
+                pane: 'pane_Parcelas_3',
+                radius: 2.0,
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(255,158,23,1.0)',
+                interactive: true,
+            }
+        }
+        map.createPane('pane_Parcelas_3');
+        map.getPane('pane_Parcelas_3').style.zIndex = 403;
+        map.getPane('pane_Parcelas_3').style['mix-blend-mode'] = 'normal';
+        var layer_Parcelas_3 = new L.geoJson(json_Parcelas_3, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_Parcelas_3',
+            layerName: 'layer_Parcelas_3',
+            pane: 'pane_Parcelas_3',
+            onEachFeature: pop_Parcelas_3,
+            pointToLayer: function (feature, latlng) {
+                var context = {
+                    feature: feature,
+                    variables: {}
+                };
+                return L.circleMarker(latlng, style_Parcelas_3_0(feature));
+            },
+        });
+        bounds_group.addLayer(layer_Parcelas_3);
+        map.addLayer(layer_Parcelas_3);
+        function pop_reasdecorta_4(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    for (var i in e.target._eventParents) {
+                        if (typeof e.target._eventParents[i].resetStyle === 'function') {
+                            e.target._eventParents[i].resetStyle(e.target);
+                        }
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2"><strong>Anualidad</strong><br />' + (feature.properties['Anualidad'] !== null ? autolinker.link(String(feature.properties['Anualidad']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_reasdecorta_4_0(feature) {
+            switch(String(feature.properties['Anualidad'])) {
+                case '2012':
+                    return {
+                pane: 'pane_reasdecorta_4',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(121,23,206,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2013':
+                    return {
+                pane: 'pane_reasdecorta_4',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(202,124,85,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2014':
+                    return {
+                pane: 'pane_reasdecorta_4',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(213,115,141,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2015':
+                    return {
+                pane: 'pane_reasdecorta_4',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(27,40,220,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2017':
+                    return {
+                pane: 'pane_reasdecorta_4',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(89,174,216,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2018':
+                    return {
+                pane: 'pane_reasdecorta_4',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(29,214,53,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2019':
+                    return {
+                pane: 'pane_reasdecorta_4',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(150,219,90,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2020':
+                    return {
+                pane: 'pane_reasdecorta_4',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(129,216,193,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2021':
+                    return {
+                pane: 'pane_reasdecorta_4',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(223,210,21,0.3)',
+                interactive: true,
+            }
+                    break;
+            }
+        }
+        map.createPane('pane_reasdecorta_4');
+        map.getPane('pane_reasdecorta_4').style.zIndex = 404;
+        map.getPane('pane_reasdecorta_4').style['mix-blend-mode'] = 'normal';
+        var layer_reasdecorta_4 = new L.geoJson(json_reasdecorta_4, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_reasdecorta_4',
+            layerName: 'layer_reasdecorta_4',
+            pane: 'pane_reasdecorta_4',
+            onEachFeature: pop_reasdecorta_4,
+            style: style_reasdecorta_4_0,
+        });
+        bounds_group.addLayer(layer_reasdecorta_4);
+        map.addLayer(layer_reasdecorta_4);
+        function pop_Parcelas_5(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    for (var i in e.target._eventParents) {
+                        if (typeof e.target._eventParents[i].resetStyle === 'function') {
+                            e.target._eventParents[i].resetStyle(e.target);
+                        }
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2"><strong>Parcela</strong><br />' + (feature.properties['Parcela'] !== null ? autolinker.link(String(feature.properties['Parcela']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_Parcelas_5_0() {
+            return {
+                pane: 'pane_Parcelas_5',
+                radius: 2.0,
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(190,207,80,1.0)',
+                interactive: true,
+            }
+        }
+        map.createPane('pane_Parcelas_5');
+        map.getPane('pane_Parcelas_5').style.zIndex = 405;
+        map.getPane('pane_Parcelas_5').style['mix-blend-mode'] = 'normal';
+        var layer_Parcelas_5 = new L.geoJson(json_Parcelas_5, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_Parcelas_5',
+            layerName: 'layer_Parcelas_5',
+            pane: 'pane_Parcelas_5',
+            onEachFeature: pop_Parcelas_5,
+            pointToLayer: function (feature, latlng) {
+                var context = {
+                    feature: feature,
+                    variables: {}
+                };
+                return L.circleMarker(latlng, style_Parcelas_5_0(feature));
+            },
+        });
+        bounds_group.addLayer(layer_Parcelas_5);
+        map.addLayer(layer_Parcelas_5);
+        function pop_reasdecorta_6(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    for (var i in e.target._eventParents) {
+                        if (typeof e.target._eventParents[i].resetStyle === 'function') {
+                            e.target._eventParents[i].resetStyle(e.target);
+                        }
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2"><strong>Anualidad</strong><br />' + (feature.properties['Anualidad'] !== null ? autolinker.link(String(feature.properties['Anualidad']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_reasdecorta_6_0(feature) {
+            switch(String(feature.properties['Anualidad'])) {
+                case '2018':
+                    return {
+                pane: 'pane_reasdecorta_6',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(118,168,210,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2019':
+                    return {
+                pane: 'pane_reasdecorta_6',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(130,18,221,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2020':
+                    return {
+                pane: 'pane_reasdecorta_6',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(62,62,212,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2021':
+                    return {
+                pane: 'pane_reasdecorta_6',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(194,218,127,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2022':
+                    return {
+                pane: 'pane_reasdecorta_6',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(114,229,219,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2023':
+                    return {
+                pane: 'pane_reasdecorta_6',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(69,231,29,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2024':
+                    return {
+                pane: 'pane_reasdecorta_6',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(203,176,107,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2025':
+                    return {
+                pane: 'pane_reasdecorta_6',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(129,219,160,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2026':
+                    return {
+                pane: 'pane_reasdecorta_6',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(235,26,218,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2027':
+                    return {
+                pane: 'pane_reasdecorta_6',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(206,108,144,0.3)',
+                interactive: true,
+            }
+                    break;
+            }
+        }
+        map.createPane('pane_reasdecorta_6');
+        map.getPane('pane_reasdecorta_6').style.zIndex = 406;
+        map.getPane('pane_reasdecorta_6').style['mix-blend-mode'] = 'normal';
+        var layer_reasdecorta_6 = new L.geoJson(json_reasdecorta_6, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_reasdecorta_6',
+            layerName: 'layer_reasdecorta_6',
+            pane: 'pane_reasdecorta_6',
+            onEachFeature: pop_reasdecorta_6,
+            style: style_reasdecorta_6_0,
+        });
+        bounds_group.addLayer(layer_reasdecorta_6);
+        map.addLayer(layer_reasdecorta_6);
+        function pop_Parcelas_7(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    for (var i in e.target._eventParents) {
+                        if (typeof e.target._eventParents[i].resetStyle === 'function') {
+                            e.target._eventParents[i].resetStyle(e.target);
+                        }
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2"><strong>Parcela</strong><br />' + (feature.properties['Parcela'] !== null ? autolinker.link(String(feature.properties['Parcela']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+        function style_Parcelas_7_0(feature) {
+            var context = {
+                feature: feature,
+                variables: {}
+            };
+            // Start of if blocks and style check logic
+            if (exp_Parcelas_7rule0_eval_expression(context)) {
+                  return {
+                pane: 'pane_Parcelas_7',
+                radius: 6.0,
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(38,153,241,1.0)',
+                interactive: true,
+            };
+                }
+                else if (exp_Parcelas_7rule1_eval_expression(context)) {
+                  return {
+                pane: 'pane_Parcelas_7',
+                radius: 6.0,
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(23,248,246,1.0)',
+                interactive: true,
+            };
+                }
+            else {
+                return {fill: false, stroke: false};
+            }
+        }
+        map.createPane('pane_Parcelas_7');
+        map.getPane('pane_Parcelas_7').style.zIndex = 407;
+        map.getPane('pane_Parcelas_7').style['mix-blend-mode'] = 'normal';
+        var layer_Parcelas_7 = new L.geoJson(json_Parcelas_7, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_Parcelas_7',
+            layerName: 'layer_Parcelas_7',
+            pane: 'pane_Parcelas_7',
+            onEachFeature: pop_Parcelas_7,
+            pointToLayer: function (feature, latlng) {
+                var context = {
+                    feature: feature,
+                    variables: {}
+                };
+                return L.circleMarker(latlng, style_Parcelas_7_0(feature));
+            },
+        });
+        bounds_group.addLayer(layer_Parcelas_7);
+        map.addLayer(layer_Parcelas_7);
+        function pop_reasdecorta_8(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    for (var i in e.target._eventParents) {
+                        if (typeof e.target._eventParents[i].resetStyle === 'function') {
+                            e.target._eventParents[i].resetStyle(e.target);
+                        }
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2"><strong>Anualidad</strong><br />' + (feature.properties['Anualidad'] !== null ? autolinker.link(String(feature.properties['Anualidad']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_reasdecorta_8_0(feature) {
+            switch(String(feature.properties['Anualidad'])) {
+                case '2022':
+                    return {
+                pane: 'pane_reasdecorta_8',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(65,123,223,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2023':
+                    return {
+                pane: 'pane_reasdecorta_8',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(15,200,114,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2024':
+                    return {
+                pane: 'pane_reasdecorta_8',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(59,26,224,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2025':
+                    return {
+                pane: 'pane_reasdecorta_8',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(229,38,178,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2026':
+                    return {
+                pane: 'pane_reasdecorta_8',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(233,216,90,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2027':
+                    return {
+                pane: 'pane_reasdecorta_8',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(185,77,228,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2028':
+                    return {
+                pane: 'pane_reasdecorta_8',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(230,165,130,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2029':
+                    return {
+                pane: 'pane_reasdecorta_8',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(44,190,203,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2030':
+                    return {
+                pane: 'pane_reasdecorta_8',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(209,89,113,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2031':
+                    return {
+                pane: 'pane_reasdecorta_8',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(120,240,120,0.3)',
+                interactive: true,
+            }
+                    break;
+            }
+        }
+        map.createPane('pane_reasdecorta_8');
+        map.getPane('pane_reasdecorta_8').style.zIndex = 408;
+        map.getPane('pane_reasdecorta_8').style['mix-blend-mode'] = 'normal';
+        var layer_reasdecorta_8 = new L.geoJson(json_reasdecorta_8, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_reasdecorta_8',
+            layerName: 'layer_reasdecorta_8',
+            pane: 'pane_reasdecorta_8',
+            onEachFeature: pop_reasdecorta_8,
+            style: style_reasdecorta_8_0,
+        });
+        bounds_group.addLayer(layer_reasdecorta_8);
+        map.addLayer(layer_reasdecorta_8);
+        function pop_Parcelas_9(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    for (var i in e.target._eventParents) {
+                        if (typeof e.target._eventParents[i].resetStyle === 'function') {
+                            e.target._eventParents[i].resetStyle(e.target);
+                        }
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2"><strong>Parcela</strong><br />' + (feature.properties['Parcela'] !== null ? autolinker.link(String(feature.properties['Parcela']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+        function style_Parcelas_9_0(feature) {
+            var context = {
+                feature: feature,
+                variables: {}
+            };
+            // Start of if blocks and style check logic
+            if (exp_Parcelas_9rule0_eval_expression(context)) {
+                  return {
+                pane: 'pane_Parcelas_9',
+                radius: 4.0,
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(38,153,241,1.0)',
+                interactive: true,
+            };
+                }
+                else if (exp_Parcelas_9rule1_eval_expression(context)) {
+                  return {
+                pane: 'pane_Parcelas_9',
+                radius: 4.0,
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(23,248,246,1.0)',
+                interactive: true,
+            };
+                }
+            else {
+                return {fill: false, stroke: false};
+            }
+        }
+        map.createPane('pane_Parcelas_9');
+        map.getPane('pane_Parcelas_9').style.zIndex = 409;
+        map.getPane('pane_Parcelas_9').style['mix-blend-mode'] = 'normal';
+        var layer_Parcelas_9 = new L.geoJson(json_Parcelas_9, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_Parcelas_9',
+            layerName: 'layer_Parcelas_9',
+            pane: 'pane_Parcelas_9',
+            onEachFeature: pop_Parcelas_9,
+            pointToLayer: function (feature, latlng) {
+                var context = {
+                    feature: feature,
+                    variables: {}
+                };
+                return L.circleMarker(latlng, style_Parcelas_9_0(feature));
+            },
+        });
+        bounds_group.addLayer(layer_Parcelas_9);
+        map.addLayer(layer_Parcelas_9);
+        function pop_reasdecorta_10(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    for (var i in e.target._eventParents) {
+                        if (typeof e.target._eventParents[i].resetStyle === 'function') {
+                            e.target._eventParents[i].resetStyle(e.target);
+                        }
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2"><strong>Anualidad</strong><br />' + (feature.properties['Anualidad'] !== null ? autolinker.link(String(feature.properties['Anualidad']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_reasdecorta_10_0(feature) {
+            switch(String(feature.properties['Anualidad'])) {
+                case '2017':
+                    return {
+                pane: 'pane_reasdecorta_10',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(141,147,232,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2018':
+                    return {
+                pane: 'pane_reasdecorta_10',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(71,203,168,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2019':
+                    return {
+                pane: 'pane_reasdecorta_10',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(34,159,221,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2020':
+                    return {
+                pane: 'pane_reasdecorta_10',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(142,70,210,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2021':
+                    return {
+                pane: 'pane_reasdecorta_10',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(239,92,23,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2022':
+                    return {
+                pane: 'pane_reasdecorta_10',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(230,224,139,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2024':
+                    return {
+                pane: 'pane_reasdecorta_10',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(213,40,193,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2025':
+                    return {
+                pane: 'pane_reasdecorta_10',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(235,119,152,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2026':
+                    return {
+                pane: 'pane_reasdecorta_10',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(147,239,66,0.3)',
+                interactive: true,
+            }
+                    break;
+            }
+        }
+        map.createPane('pane_reasdecorta_10');
+        map.getPane('pane_reasdecorta_10').style.zIndex = 410;
+        map.getPane('pane_reasdecorta_10').style['mix-blend-mode'] = 'normal';
+        var layer_reasdecorta_10 = new L.geoJson(json_reasdecorta_10, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_reasdecorta_10',
+            layerName: 'layer_reasdecorta_10',
+            pane: 'pane_reasdecorta_10',
+            onEachFeature: pop_reasdecorta_10,
+            style: style_reasdecorta_10_0,
+        });
+        bounds_group.addLayer(layer_reasdecorta_10);
+        map.addLayer(layer_reasdecorta_10);
+        function pop_Parcelas_11(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    for (var i in e.target._eventParents) {
+                        if (typeof e.target._eventParents[i].resetStyle === 'function') {
+                            e.target._eventParents[i].resetStyle(e.target);
+                        }
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2"><strong>Parcela</strong><br />' + (feature.properties['Parcela'] !== null ? autolinker.link(String(feature.properties['Parcela']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+        function style_Parcelas_11_0(feature) {
+            var context = {
+                feature: feature,
+                variables: {}
+            };
+            // Start of if blocks and style check logic
+            if (exp_Parcelas_11rule0_eval_expression(context)) {
+                  return {
+                pane: 'pane_Parcelas_11',
+                radius: 4.0,
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(38,153,241,1.0)',
+                interactive: true,
+            };
+                }
+                else if (exp_Parcelas_11rule1_eval_expression(context)) {
+                  return {
+                pane: 'pane_Parcelas_11',
+                radius: 4.0,
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(23,248,246,1.0)',
+                interactive: true,
+            };
+                }
+            else {
+                return {fill: false, stroke: false};
+            }
+        }
+        map.createPane('pane_Parcelas_11');
+        map.getPane('pane_Parcelas_11').style.zIndex = 411;
+        map.getPane('pane_Parcelas_11').style['mix-blend-mode'] = 'normal';
+        var layer_Parcelas_11 = new L.geoJson(json_Parcelas_11, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_Parcelas_11',
+            layerName: 'layer_Parcelas_11',
+            pane: 'pane_Parcelas_11',
+            onEachFeature: pop_Parcelas_11,
+            pointToLayer: function (feature, latlng) {
+                var context = {
+                    feature: feature,
+                    variables: {}
+                };
+                return L.circleMarker(latlng, style_Parcelas_11_0(feature));
+            },
+        });
+        bounds_group.addLayer(layer_Parcelas_11);
+        map.addLayer(layer_Parcelas_11);
+        function pop_reasdecorta_12(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    for (var i in e.target._eventParents) {
+                        if (typeof e.target._eventParents[i].resetStyle === 'function') {
+                            e.target._eventParents[i].resetStyle(e.target);
+                        }
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2"><strong>ANUALIDAD</strong><br />' + (feature.properties['ANUALIDAD'] !== null ? autolinker.link(String(feature.properties['ANUALIDAD']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_reasdecorta_12_0(feature) {
+            switch(String(feature.properties['ANUALIDAD'])) {
+                case '2021':
+                    return {
+                pane: 'pane_reasdecorta_12',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(73,210,119,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2022':
+                    return {
+                pane: 'pane_reasdecorta_12',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(123,41,200,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2023':
+                    return {
+                pane: 'pane_reasdecorta_12',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(90,171,233,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2024':
+                    return {
+                pane: 'pane_reasdecorta_12',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(235,98,74,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2025':
+                    return {
+                pane: 'pane_reasdecorta_12',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(187,211,108,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2026':
+                    return {
+                pane: 'pane_reasdecorta_12',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(47,50,234,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2027':
+                    return {
+                pane: 'pane_reasdecorta_12',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(236,92,226,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2028':
+                    return {
+                pane: 'pane_reasdecorta_12',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(227,55,121,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2029':
+                    return {
+                pane: 'pane_reasdecorta_12',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(146,240,120,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2030':
+                    return {
+                pane: 'pane_reasdecorta_12',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(215,177,88,0.3)',
+                interactive: true,
+            }
+                    break;
+            }
+        }
+        map.createPane('pane_reasdecorta_12');
+        map.getPane('pane_reasdecorta_12').style.zIndex = 412;
+        map.getPane('pane_reasdecorta_12').style['mix-blend-mode'] = 'normal';
+        var layer_reasdecorta_12 = new L.geoJson(json_reasdecorta_12, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_reasdecorta_12',
+            layerName: 'layer_reasdecorta_12',
+            pane: 'pane_reasdecorta_12',
+            onEachFeature: pop_reasdecorta_12,
+            style: style_reasdecorta_12_0,
+        });
+        bounds_group.addLayer(layer_reasdecorta_12);
+        map.addLayer(layer_reasdecorta_12);
+        function pop_Parcelas_13(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    for (var i in e.target._eventParents) {
+                        if (typeof e.target._eventParents[i].resetStyle === 'function') {
+                            e.target._eventParents[i].resetStyle(e.target);
+                        }
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2"><strong>Parcela</strong><br />' + (feature.properties['Parcela'] !== null ? autolinker.link(String(feature.properties['Parcela']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+        function style_Parcelas_13_0(feature) {
+            var context = {
+                feature: feature,
+                variables: {}
+            };
+            // Start of if blocks and style check logic
+            if (exp_Parcelas_13rule0_eval_expression(context)) {
+                  return {
+                pane: 'pane_Parcelas_13',
+                radius: 4.0,
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(38,153,241,1.0)',
+                interactive: true,
+            };
+                }
+                else if (exp_Parcelas_13rule1_eval_expression(context)) {
+                  return {
+                pane: 'pane_Parcelas_13',
+                radius: 4.0,
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(23,248,246,1.0)',
+                interactive: true,
+            };
+                }
+            else {
+                return {fill: false, stroke: false};
+            }
+        }
+        map.createPane('pane_Parcelas_13');
+        map.getPane('pane_Parcelas_13').style.zIndex = 413;
+        map.getPane('pane_Parcelas_13').style['mix-blend-mode'] = 'normal';
+        var layer_Parcelas_13 = new L.geoJson(json_Parcelas_13, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_Parcelas_13',
+            layerName: 'layer_Parcelas_13',
+            pane: 'pane_Parcelas_13',
+            onEachFeature: pop_Parcelas_13,
+            pointToLayer: function (feature, latlng) {
+                var context = {
+                    feature: feature,
+                    variables: {}
+                };
+                return L.circleMarker(latlng, style_Parcelas_13_0(feature));
+            },
+        });
+        bounds_group.addLayer(layer_Parcelas_13);
+        map.addLayer(layer_Parcelas_13);
+        function pop_reasdecorta_14(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    for (var i in e.target._eventParents) {
+                        if (typeof e.target._eventParents[i].resetStyle === 'function') {
+                            e.target._eventParents[i].resetStyle(e.target);
+                        }
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2"><strong>Anualidad</strong><br />' + (feature.properties['Anualidad'] !== null ? autolinker.link(String(feature.properties['Anualidad']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_reasdecorta_14_0(feature) {
+            switch(String(feature.properties['Anualidad'])) {
+                case '2022':
+                    return {
+                pane: 'pane_reasdecorta_14',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(136,203,82,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2023':
+                    return {
+                pane: 'pane_reasdecorta_14',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(151,79,213,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2024':
+                    return {
+                pane: 'pane_reasdecorta_14',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(212,37,28,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2025':
+                    return {
+                pane: 'pane_reasdecorta_14',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(77,147,227,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2026':
+                    return {
+                pane: 'pane_reasdecorta_14',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(202,147,81,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2027':
+                    return {
+                pane: 'pane_reasdecorta_14',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(224,25,114,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2028':
+                    return {
+                pane: 'pane_reasdecorta_14',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(213,79,209,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2029':
+                    return {
+                pane: 'pane_reasdecorta_14',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(142,239,195,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2030':
+                    return {
+                pane: 'pane_reasdecorta_14',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(99,215,105,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2031':
+                    return {
+                pane: 'pane_reasdecorta_14',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(94,90,201,0.3)',
+                interactive: true,
+            }
+                    break;
+            }
+        }
+        map.createPane('pane_reasdecorta_14');
+        map.getPane('pane_reasdecorta_14').style.zIndex = 414;
+        map.getPane('pane_reasdecorta_14').style['mix-blend-mode'] = 'normal';
+        var layer_reasdecorta_14 = new L.geoJson(json_reasdecorta_14, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_reasdecorta_14',
+            layerName: 'layer_reasdecorta_14',
+            pane: 'pane_reasdecorta_14',
+            onEachFeature: pop_reasdecorta_14,
+            style: style_reasdecorta_14_0,
+        });
+        bounds_group.addLayer(layer_reasdecorta_14);
+        map.addLayer(layer_reasdecorta_14);
+        function pop_Parcelas_15(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    for (var i in e.target._eventParents) {
+                        if (typeof e.target._eventParents[i].resetStyle === 'function') {
+                            e.target._eventParents[i].resetStyle(e.target);
+                        }
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2"><strong>Parcela</strong><br />' + (feature.properties['Parcela'] !== null ? autolinker.link(String(feature.properties['Parcela']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+        function style_Parcelas_15_0(feature) {
+            var context = {
+                feature: feature,
+                variables: {}
+            };
+            // Start of if blocks and style check logic
+            if (exp_Parcelas_15rule0_eval_expression(context)) {
+                  return {
+                pane: 'pane_Parcelas_15',
+                radius: 4.0,
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(23,248,246,1.0)',
+                interactive: true,
+            };
+                }
+                else if (exp_Parcelas_15rule1_eval_expression(context)) {
+                  return {
+                pane: 'pane_Parcelas_15',
+                radius: 4.0,
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(38,153,241,1.0)',
+                interactive: true,
+            };
+                }
+            else {
+                return {fill: false, stroke: false};
+            }
+        }
+        map.createPane('pane_Parcelas_15');
+        map.getPane('pane_Parcelas_15').style.zIndex = 415;
+        map.getPane('pane_Parcelas_15').style['mix-blend-mode'] = 'normal';
+        var layer_Parcelas_15 = new L.geoJson(json_Parcelas_15, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_Parcelas_15',
+            layerName: 'layer_Parcelas_15',
+            pane: 'pane_Parcelas_15',
+            onEachFeature: pop_Parcelas_15,
+            pointToLayer: function (feature, latlng) {
+                var context = {
+                    feature: feature,
+                    variables: {}
+                };
+                return L.circleMarker(latlng, style_Parcelas_15_0(feature));
+            },
+        });
+        bounds_group.addLayer(layer_Parcelas_15);
+        map.addLayer(layer_Parcelas_15);
+        function pop_reasdecorta_16(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    for (var i in e.target._eventParents) {
+                        if (typeof e.target._eventParents[i].resetStyle === 'function') {
+                            e.target._eventParents[i].resetStyle(e.target);
+                        }
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2"><strong>Anualidad</strong><br />' + (feature.properties['Anualidad'] !== null ? autolinker.link(String(feature.properties['Anualidad']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_reasdecorta_16_0(feature) {
+            switch(String(feature.properties['Anualidad'])) {
+                case '2019':
+                    return {
+                pane: 'pane_reasdecorta_16',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(230,21,66,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2020':
+                    return {
+                pane: 'pane_reasdecorta_16',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(225,195,86,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2021':
+                    return {
+                pane: 'pane_reasdecorta_16',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(104,220,72,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2022':
+                    return {
+                pane: 'pane_reasdecorta_16',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(63,104,238,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2023':
+                    return {
+                pane: 'pane_reasdecorta_16',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(159,135,224,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2024':
+                    return {
+                pane: 'pane_reasdecorta_16',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(27,174,232,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2025':
+                    return {
+                pane: 'pane_reasdecorta_16',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(202,116,228,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2026':
+                    return {
+                pane: 'pane_reasdecorta_16',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(220,67,177,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2027':
+                    return {
+                pane: 'pane_reasdecorta_16',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(236,101,47,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2028':
+                    return {
+                pane: 'pane_reasdecorta_16',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(98,219,132,0.3)',
+                interactive: true,
+            }
+                    break;
+            }
+        }
+        map.createPane('pane_reasdecorta_16');
+        map.getPane('pane_reasdecorta_16').style.zIndex = 416;
+        map.getPane('pane_reasdecorta_16').style['mix-blend-mode'] = 'normal';
+        var layer_reasdecorta_16 = new L.geoJson(json_reasdecorta_16, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_reasdecorta_16',
+            layerName: 'layer_reasdecorta_16',
+            pane: 'pane_reasdecorta_16',
+            onEachFeature: pop_reasdecorta_16,
+            style: style_reasdecorta_16_0,
+        });
+        bounds_group.addLayer(layer_reasdecorta_16);
+        map.addLayer(layer_reasdecorta_16);
+        function pop_Parcelas_17(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    for (var i in e.target._eventParents) {
+                        if (typeof e.target._eventParents[i].resetStyle === 'function') {
+                            e.target._eventParents[i].resetStyle(e.target);
+                        }
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2"><strong>Parcela</strong><br />' + (feature.properties['Parcela'] !== null ? autolinker.link(String(feature.properties['Parcela']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+        function style_Parcelas_17_0(feature) {
+            var context = {
+                feature: feature,
+                variables: {}
+            };
+            // Start of if blocks and style check logic
+            if (exp_Parcelas_17rule0_eval_expression(context)) {
+                  return {
+                pane: 'pane_Parcelas_17',
+                radius: 4.0,
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(38,153,241,1.0)',
+                interactive: true,
+            };
+                }
+                else if (exp_Parcelas_17rule1_eval_expression(context)) {
+                  return {
+                pane: 'pane_Parcelas_17',
+                radius: 4.0,
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(38,153,241,1.0)',
+                interactive: true,
+            };
+                }
+            else {
+                return {fill: false, stroke: false};
+            }
+        }
+        map.createPane('pane_Parcelas_17');
+        map.getPane('pane_Parcelas_17').style.zIndex = 417;
+        map.getPane('pane_Parcelas_17').style['mix-blend-mode'] = 'normal';
+        var layer_Parcelas_17 = new L.geoJson(json_Parcelas_17, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_Parcelas_17',
+            layerName: 'layer_Parcelas_17',
+            pane: 'pane_Parcelas_17',
+            onEachFeature: pop_Parcelas_17,
+            pointToLayer: function (feature, latlng) {
+                var context = {
+                    feature: feature,
+                    variables: {}
+                };
+                return L.circleMarker(latlng, style_Parcelas_17_0(feature));
+            },
+        });
+        bounds_group.addLayer(layer_Parcelas_17);
+        map.addLayer(layer_Parcelas_17);
+        function pop_reasdecorta_18(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    for (var i in e.target._eventParents) {
+                        if (typeof e.target._eventParents[i].resetStyle === 'function') {
+                            e.target._eventParents[i].resetStyle(e.target);
+                        }
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2"><strong>AnualMod26</strong><br />' + (feature.properties['AnualMod26'] !== null ? autolinker.link(String(feature.properties['AnualMod26']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_reasdecorta_18_0(feature) {
+            switch(String(feature.properties['Anualidad'])) {
+                case '2020':
+                    return {
+                pane: 'pane_reasdecorta_18',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(236,54,87,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2021':
+                    return {
+                pane: 'pane_reasdecorta_18',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(214,27,161,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2023':
+                    return {
+                pane: 'pane_reasdecorta_18',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(96,206,157,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2024':
+                    return {
+                pane: 'pane_reasdecorta_18',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(156,236,57,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2025':
+                    return {
+                pane: 'pane_reasdecorta_18',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(137,173,237,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2026':
+                    return {
+                pane: 'pane_reasdecorta_18',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(57,230,57,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2027':
+                    return {
+                pane: 'pane_reasdecorta_18',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(146,128,225,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2028':
+                    return {
+                pane: 'pane_reasdecorta_18',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(215,95,25,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2029':
+                    return {
+                pane: 'pane_reasdecorta_18',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(239,223,49,0.3)',
+                interactive: true,
+            }
+                    break;
+            }
+        }
+        map.createPane('pane_reasdecorta_18');
+        map.getPane('pane_reasdecorta_18').style.zIndex = 418;
+        map.getPane('pane_reasdecorta_18').style['mix-blend-mode'] = 'normal';
+        var layer_reasdecorta_18 = new L.geoJson(json_reasdecorta_18, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_reasdecorta_18',
+            layerName: 'layer_reasdecorta_18',
+            pane: 'pane_reasdecorta_18',
+            onEachFeature: pop_reasdecorta_18,
+            style: style_reasdecorta_18_0,
+        });
+        bounds_group.addLayer(layer_reasdecorta_18);
+        map.addLayer(layer_reasdecorta_18);
+        function pop_Parcelas_19(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    for (var i in e.target._eventParents) {
+                        if (typeof e.target._eventParents[i].resetStyle === 'function') {
+                            e.target._eventParents[i].resetStyle(e.target);
+                        }
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2"><strong>Parcela</strong><br />' + (feature.properties['Parcela'] !== null ? autolinker.link(String(feature.properties['Parcela']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+        function style_Parcelas_19_0(feature) {
+            var context = {
+                feature: feature,
+                variables: {}
+            };
+            // Start of if blocks and style check logic
+            if (exp_Parcelas_19rule0_eval_expression(context)) {
+                  return {
+                pane: 'pane_Parcelas_19',
+                radius: 4.0,
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(23,248,246,1.0)',
+                interactive: true,
+            };
+                }
+            else {
+                return {fill: false, stroke: false};
+            }
+        }
+        map.createPane('pane_Parcelas_19');
+        map.getPane('pane_Parcelas_19').style.zIndex = 419;
+        map.getPane('pane_Parcelas_19').style['mix-blend-mode'] = 'normal';
+        var layer_Parcelas_19 = new L.geoJson(json_Parcelas_19, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_Parcelas_19',
+            layerName: 'layer_Parcelas_19',
+            pane: 'pane_Parcelas_19',
+            onEachFeature: pop_Parcelas_19,
+            pointToLayer: function (feature, latlng) {
+                var context = {
+                    feature: feature,
+                    variables: {}
+                };
+                return L.circleMarker(latlng, style_Parcelas_19_0(feature));
+            },
+        });
+        bounds_group.addLayer(layer_Parcelas_19);
+        map.addLayer(layer_Parcelas_19);
+        function pop_reasdecorta_20(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    for (var i in e.target._eventParents) {
+                        if (typeof e.target._eventParents[i].resetStyle === 'function') {
+                            e.target._eventParents[i].resetStyle(e.target);
+                        }
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2"><strong>ANUALIDAD</strong><br />' + (feature.properties['ANUALIDAD'] !== null ? autolinker.link(String(feature.properties['ANUALIDAD']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_reasdecorta_20_0(feature) {
+            switch(String(feature.properties['ANUALIDAD'])) {
+                case '2025':
+                    return {
+                pane: 'pane_reasdecorta_20',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(222,167,72,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2026':
+                    return {
+                pane: 'pane_reasdecorta_20',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(46,67,141,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2027':
+                    return {
+                pane: 'pane_reasdecorta_20',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(249,157,44,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2028':
+                    return {
+                pane: 'pane_reasdecorta_20',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(85,134,11,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2029':
+                    return {
+                pane: 'pane_reasdecorta_20',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(128,165,63,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2030':
+                    return {
+                pane: 'pane_reasdecorta_20',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(216,42,106,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2031':
+                    return {
+                pane: 'pane_reasdecorta_20',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(73,50,149,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2032':
+                    return {
+                pane: 'pane_reasdecorta_20',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(66,201,188,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2033':
+                    return {
+                pane: 'pane_reasdecorta_20',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(84,224,217,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2034':
+                    return {
+                pane: 'pane_reasdecorta_20',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(212,160,122,0.3)',
+                interactive: true,
+            }
+                    break;
+            }
+        }
+        map.createPane('pane_reasdecorta_20');
+        map.getPane('pane_reasdecorta_20').style.zIndex = 420;
+        map.getPane('pane_reasdecorta_20').style['mix-blend-mode'] = 'normal';
+        var layer_reasdecorta_20 = new L.geoJson(json_reasdecorta_20, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_reasdecorta_20',
+            layerName: 'layer_reasdecorta_20',
+            pane: 'pane_reasdecorta_20',
+            onEachFeature: pop_reasdecorta_20,
+            style: style_reasdecorta_20_0,
+        });
+        bounds_group.addLayer(layer_reasdecorta_20);
+        map.addLayer(layer_reasdecorta_20);
+        function pop_Parcela_21(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    for (var i in e.target._eventParents) {
+                        if (typeof e.target._eventParents[i].resetStyle === 'function') {
+                            e.target._eventParents[i].resetStyle(e.target);
+                        }
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2"><strong>Parcela</strong><br />' + (feature.properties['Parcela'] !== null ? autolinker.link(String(feature.properties['Parcela']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+        function style_Parcela_21_0(feature) {
+            var context = {
+                feature: feature,
+                variables: {}
+            };
+            // Start of if blocks and style check logic
+            if (exp_Parcela_21rule0_eval_expression(context)) {
+                  return {
+                pane: 'pane_Parcela_21',
+                radius: 4.0,
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(38,153,241,1.0)',
+                interactive: true,
+            };
+                }
+            else {
+                return {fill: false, stroke: false};
+            }
+        }
+        map.createPane('pane_Parcela_21');
+        map.getPane('pane_Parcela_21').style.zIndex = 421;
+        map.getPane('pane_Parcela_21').style['mix-blend-mode'] = 'normal';
+        var layer_Parcela_21 = new L.geoJson(json_Parcela_21, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_Parcela_21',
+            layerName: 'layer_Parcela_21',
+            pane: 'pane_Parcela_21',
+            onEachFeature: pop_Parcela_21,
+            pointToLayer: function (feature, latlng) {
+                var context = {
+                    feature: feature,
+                    variables: {}
+                };
+                return L.circleMarker(latlng, style_Parcela_21_0(feature));
+            },
+        });
+        bounds_group.addLayer(layer_Parcela_21);
+        map.addLayer(layer_Parcela_21);
+        function pop_reasdecorta_22(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    for (var i in e.target._eventParents) {
+                        if (typeof e.target._eventParents[i].resetStyle === 'function') {
+                            e.target._eventParents[i].resetStyle(e.target);
+                        }
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2"><strong>Anualidad</strong><br />' + (feature.properties['Anualidad'] !== null ? autolinker.link(String(feature.properties['Anualidad']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_reasdecorta_22_0(feature) {
+            switch(String(feature.properties['Anualidad'])) {
+                case '2016':
+                    return {
+                pane: 'pane_reasdecorta_22',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(89,215,169,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2017':
+                    return {
+                pane: 'pane_reasdecorta_22',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(239,170,113,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2018':
+                    return {
+                pane: 'pane_reasdecorta_22',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(159,208,119,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2019':
+                    return {
+                pane: 'pane_reasdecorta_22',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(235,235,89,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2020':
+                    return {
+                pane: 'pane_reasdecorta_22',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(197,66,226,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2021':
+                    return {
+                pane: 'pane_reasdecorta_22',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(94,130,229,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2022':
+                    return {
+                pane: 'pane_reasdecorta_22',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(111,209,233,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2023':
+                    return {
+                pane: 'pane_reasdecorta_22',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(136,95,240,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2024':
+                    return {
+                pane: 'pane_reasdecorta_22',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(83,237,96,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2025':
+                    return {
+                pane: 'pane_reasdecorta_22',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(214,19,143,0.3)',
+                interactive: true,
+            }
+                    break;
+                default:
+                    return {
+                pane: 'pane_reasdecorta_22',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(233,84,96,0.3)',
+                interactive: true,
+            }
+                    break;
+            }
+        }
+        map.createPane('pane_reasdecorta_22');
+        map.getPane('pane_reasdecorta_22').style.zIndex = 422;
+        map.getPane('pane_reasdecorta_22').style['mix-blend-mode'] = 'normal';
+        var layer_reasdecorta_22 = new L.geoJson(json_reasdecorta_22, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_reasdecorta_22',
+            layerName: 'layer_reasdecorta_22',
+            pane: 'pane_reasdecorta_22',
+            onEachFeature: pop_reasdecorta_22,
+            style: style_reasdecorta_22_0,
+        });
+        bounds_group.addLayer(layer_reasdecorta_22);
+        map.addLayer(layer_reasdecorta_22);
+        function pop_Parcelas_23(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    for (var i in e.target._eventParents) {
+                        if (typeof e.target._eventParents[i].resetStyle === 'function') {
+                            e.target._eventParents[i].resetStyle(e.target);
+                        }
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2"><strong>Parcela</strong><br />' + (feature.properties['Parcela'] !== null ? autolinker.link(String(feature.properties['Parcela']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+        function style_Parcelas_23_0(feature) {
+            var context = {
+                feature: feature,
+                variables: {}
+            };
+            // Start of if blocks and style check logic
+            if (exp_Parcelas_23rule0_eval_expression(context)) {
+                  return {
+                pane: 'pane_Parcelas_23',
+                radius: 4.0,
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(38,153,241,1.0)',
+                interactive: true,
+            };
+                }
+                else if (exp_Parcelas_23rule1_eval_expression(context)) {
+                  return {
+                pane: 'pane_Parcelas_23',
+                radius: 4.0,
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(23,248,246,1.0)',
+                interactive: true,
+            };
+                }
+            else {
+                return {fill: false, stroke: false};
+            }
+        }
+        map.createPane('pane_Parcelas_23');
+        map.getPane('pane_Parcelas_23').style.zIndex = 423;
+        map.getPane('pane_Parcelas_23').style['mix-blend-mode'] = 'normal';
+        var layer_Parcelas_23 = new L.geoJson(json_Parcelas_23, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_Parcelas_23',
+            layerName: 'layer_Parcelas_23',
+            pane: 'pane_Parcelas_23',
+            onEachFeature: pop_Parcelas_23,
+            pointToLayer: function (feature, latlng) {
+                var context = {
+                    feature: feature,
+                    variables: {}
+                };
+                return L.circleMarker(latlng, style_Parcelas_23_0(feature));
+            },
+        });
+        bounds_group.addLayer(layer_Parcelas_23);
+        map.addLayer(layer_Parcelas_23);
+        function pop_reasdecorta_24(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    for (var i in e.target._eventParents) {
+                        if (typeof e.target._eventParents[i].resetStyle === 'function') {
+                            e.target._eventParents[i].resetStyle(e.target);
+                        }
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2"><strong>AÑO</strong><br />' + (feature.properties['AÑO'] !== null ? autolinker.link(String(feature.properties['AÑO']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_reasdecorta_24_0(feature) {
+            switch(String(feature.properties['AÑO'])) {
+                case '2016':
+                    return {
+                pane: 'pane_reasdecorta_24',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(48,18,59,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2017':
+                    return {
+                pane: 'pane_reasdecorta_24',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(70,98,216,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2018':
+                    return {
+                pane: 'pane_reasdecorta_24',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(53,171,248,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2019':
+                    return {
+                pane: 'pane_reasdecorta_24',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(27,229,181,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2020':
+                    return {
+                pane: 'pane_reasdecorta_24',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(116,254,93,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2021':
+                    return {
+                pane: 'pane_reasdecorta_24',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(201,239,52,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2022':
+                    return {
+                pane: 'pane_reasdecorta_24',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(251,185,56,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2023':
+                    return {
+                pane: 'pane_reasdecorta_24',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(245,105,24,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2024':
+                    return {
+                pane: 'pane_reasdecorta_24',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(201,41,3,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2025':
+                    return {
+                pane: 'pane_reasdecorta_24',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(122,4,3,0.3)',
+                interactive: true,
+            }
+                    break;
+            }
+        }
+        map.createPane('pane_reasdecorta_24');
+        map.getPane('pane_reasdecorta_24').style.zIndex = 424;
+        map.getPane('pane_reasdecorta_24').style['mix-blend-mode'] = 'normal';
+        var layer_reasdecorta_24 = new L.geoJson(json_reasdecorta_24, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_reasdecorta_24',
+            layerName: 'layer_reasdecorta_24',
+            pane: 'pane_reasdecorta_24',
+            onEachFeature: pop_reasdecorta_24,
+            style: style_reasdecorta_24_0,
+        });
+        bounds_group.addLayer(layer_reasdecorta_24);
+        map.addLayer(layer_reasdecorta_24);
+        function pop_Parcelas_25(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    for (var i in e.target._eventParents) {
+                        if (typeof e.target._eventParents[i].resetStyle === 'function') {
+                            e.target._eventParents[i].resetStyle(e.target);
+                        }
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2"><strong>Parcela</strong><br />' + (feature.properties['Parcela'] !== null ? autolinker.link(String(feature.properties['Parcela']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+        function style_Parcelas_25_0(feature) {
+            var context = {
+                feature: feature,
+                variables: {}
+            };
+            // Start of if blocks and style check logic
+            if (exp_Parcelas_25rule0_eval_expression(context)) {
+                  return {
+                pane: 'pane_Parcelas_25',
+                radius: 4.0,
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(38,153,241,1.0)',
+                interactive: true,
+            };
+                }
+                else if (exp_Parcelas_25rule1_eval_expression(context)) {
+                  return {
+                pane: 'pane_Parcelas_25',
+                radius: 4.0,
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(23,248,246,1.0)',
+                interactive: true,
+            };
+                }
+            else {
+                return {fill: false, stroke: false};
+            }
+        }
+        map.createPane('pane_Parcelas_25');
+        map.getPane('pane_Parcelas_25').style.zIndex = 425;
+        map.getPane('pane_Parcelas_25').style['mix-blend-mode'] = 'normal';
+        var layer_Parcelas_25 = new L.geoJson(json_Parcelas_25, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_Parcelas_25',
+            layerName: 'layer_Parcelas_25',
+            pane: 'pane_Parcelas_25',
+            onEachFeature: pop_Parcelas_25,
+            pointToLayer: function (feature, latlng) {
+                var context = {
+                    feature: feature,
+                    variables: {}
+                };
+                return L.circleMarker(latlng, style_Parcelas_25_0(feature));
+            },
+        });
+        bounds_group.addLayer(layer_Parcelas_25);
+        map.addLayer(layer_Parcelas_25);
+        function pop_AreasdeCorta_26(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    for (var i in e.target._eventParents) {
+                        if (typeof e.target._eventParents[i].resetStyle === 'function') {
+                            e.target._eventParents[i].resetStyle(e.target);
+                        }
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+            var popupContent = '<table>\
+                    <tr>\
+                        <td class="visible-with-data" id="Año" colspan="2"><strong>Año</strong><br />' + (feature.properties['Año'] !== null ? autolinker.link(String(feature.properties['Año']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_AreasdeCorta_26_0(feature) {
+            switch(String(feature.properties['Año'])) {
+                case '2021':
+                    return {
+                pane: 'pane_AreasdeCorta_26',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(48,18,59,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2022':
+                    return {
+                pane: 'pane_AreasdeCorta_26',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(62,156,254,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2023':
+                    return {
+                pane: 'pane_AreasdeCorta_26',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(72,248,130,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2024':
+                    return {
+                pane: 'pane_AreasdeCorta_26',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(226,220,56,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2025':
+                    return {
+                pane: 'pane_AreasdeCorta_26',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(239,89,17,0.3)',
+                interactive: true,
+            }
+                    break;
+            }
+        }
+        map.createPane('pane_AreasdeCorta_26');
+        map.getPane('pane_AreasdeCorta_26').style.zIndex = 426;
+        map.getPane('pane_AreasdeCorta_26').style['mix-blend-mode'] = 'normal';
+        var layer_AreasdeCorta_26 = new L.geoJson(json_AreasdeCorta_26, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_AreasdeCorta_26',
+            layerName: 'layer_AreasdeCorta_26',
+            pane: 'pane_AreasdeCorta_26',
+            onEachFeature: pop_AreasdeCorta_26,
+            style: style_AreasdeCorta_26_0,
+        });
+        bounds_group.addLayer(layer_AreasdeCorta_26);
+        map.addLayer(layer_AreasdeCorta_26);
+        function pop_Parcelas_27(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    for (var i in e.target._eventParents) {
+                        if (typeof e.target._eventParents[i].resetStyle === 'function') {
+                            e.target._eventParents[i].resetStyle(e.target);
+                        }
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2"><strong>Parcela</strong><br />' + (feature.properties['Parcela'] !== null ? autolinker.link(String(feature.properties['Parcela']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+        function style_Parcelas_27_0(feature) {
+            var context = {
+                feature: feature,
+                variables: {}
+            };
+            // Start of if blocks and style check logic
+            if (exp_Parcelas_27rule0_eval_expression(context)) {
+                  return {
+                pane: 'pane_Parcelas_27',
+                radius: 4.0,
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(27,160,235,1.0)',
+                interactive: true,
+            };
+                }
+            else {
+                return {fill: false, stroke: false};
+            }
+        }
+        map.createPane('pane_Parcelas_27');
+        map.getPane('pane_Parcelas_27').style.zIndex = 427;
+        map.getPane('pane_Parcelas_27').style['mix-blend-mode'] = 'normal';
+        var layer_Parcelas_27 = new L.geoJson(json_Parcelas_27, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_Parcelas_27',
+            layerName: 'layer_Parcelas_27',
+            pane: 'pane_Parcelas_27',
+            onEachFeature: pop_Parcelas_27,
+            pointToLayer: function (feature, latlng) {
+                var context = {
+                    feature: feature,
+                    variables: {}
+                };
+                return L.circleMarker(latlng, style_Parcelas_27_0(feature));
+            },
+        });
+        bounds_group.addLayer(layer_Parcelas_27);
+        map.addLayer(layer_Parcelas_27);
+        function pop_Areasdecorta_28(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    for (var i in e.target._eventParents) {
+                        if (typeof e.target._eventParents[i].resetStyle === 'function') {
+                            e.target._eventParents[i].resetStyle(e.target);
+                        }
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+            var popupContent = '<table>\
+                    <tr>\
+                        <td class="visible-with-data" id="Anualidad" colspan="2"><strong>Anualidad</strong><br />' + (feature.properties['Anualidad'] !== null ? autolinker.link(String(feature.properties['Anualidad']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_Areasdecorta_28_0(feature) {
+            switch(String(feature.properties['Anualidad'])) {
+                case '2021':
+                    return {
+                pane: 'pane_Areasdecorta_28',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(71,203,27,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2022':
+                    return {
+                pane: 'pane_Areasdecorta_28',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(237,205,140,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2023':
+                    return {
+                pane: 'pane_Areasdecorta_28',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(119,203,143,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2024':
+                    return {
+                pane: 'pane_Areasdecorta_28',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(232,83,64,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2025':
+                    return {
+                pane: 'pane_Areasdecorta_28',
+                opacity: 1,
+                color: 'rgba(255,255,255,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(227,40,224,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2026':
+                    return {
+                pane: 'pane_Areasdecorta_28',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(205,229,109,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2027':
+                    return {
+                pane: 'pane_Areasdecorta_28',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(92,211,191,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2028':
+                    return {
+                pane: 'pane_Areasdecorta_28',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(23,39,218,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2029':
+                    return {
+                pane: 'pane_Areasdecorta_28',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(25,153,233,0.3)',
+                interactive: true,
+            }
+                    break;
+                case '2030':
+                    return {
+                pane: 'pane_Areasdecorta_28',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.3)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(201,19,98,0.3)',
+                interactive: true,
+            }
+                    break;
+            }
+        }
+        map.createPane('pane_Areasdecorta_28');
+        map.getPane('pane_Areasdecorta_28').style.zIndex = 428;
+        map.getPane('pane_Areasdecorta_28').style['mix-blend-mode'] = 'normal';
+        var layer_Areasdecorta_28 = new L.geoJson(json_Areasdecorta_28, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_Areasdecorta_28',
+            layerName: 'layer_Areasdecorta_28',
+            pane: 'pane_Areasdecorta_28',
+            onEachFeature: pop_Areasdecorta_28,
+            style: style_Areasdecorta_28_0,
+        });
+        bounds_group.addLayer(layer_Areasdecorta_28);
+        map.addLayer(layer_Areasdecorta_28);
+        function pop_Parcelas_29(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    for (var i in e.target._eventParents) {
+                        if (typeof e.target._eventParents[i].resetStyle === 'function') {
+                            e.target._eventParents[i].resetStyle(e.target);
+                        }
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2"><strong>Parcela</strong><br />' + (feature.properties['Parcela'] !== null ? autolinker.link(String(feature.properties['Parcela']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+        function style_Parcelas_29_0(feature) {
+            var context = {
+                feature: feature,
+                variables: {}
+            };
+            // Start of if blocks and style check logic
+            if (exp_Parcelas_29rule0_eval_expression(context)) {
+                  return {
+                pane: 'pane_Parcelas_29',
+                radius: 4.0,
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(38,153,241,1.0)',
+                interactive: true,
+            };
+                }
+            else {
+                return {fill: false, stroke: false};
+            }
+        }
+        map.createPane('pane_Parcelas_29');
+        map.getPane('pane_Parcelas_29').style.zIndex = 429;
+        map.getPane('pane_Parcelas_29').style['mix-blend-mode'] = 'normal';
+        var layer_Parcelas_29 = new L.geoJson(json_Parcelas_29, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_Parcelas_29',
+            layerName: 'layer_Parcelas_29',
+            pane: 'pane_Parcelas_29',
+            onEachFeature: pop_Parcelas_29,
+            pointToLayer: function (feature, latlng) {
+                var context = {
+                    feature: feature,
+                    variables: {}
+                };
+                return L.circleMarker(latlng, style_Parcelas_29_0(feature));
+            },
+        });
+        bounds_group.addLayer(layer_Parcelas_29);
+        map.addLayer(layer_Parcelas_29);
+        var overlaysTree = [
+        {label: '<b>CP Alejandro Rancho Metepec</b>', collapsed: true, selectAllCheckbox: true, children: [
+            {label: 'Parcelas<br /><table><tr><td style="text-align: center;"><img src="legend/Parcelas_29_0.png" /></td><td></td></tr></table>', layer: layer_Parcelas_29},
+            {label: 'Areas de corta<br /><table><tr><td style="text-align: center;"><img src="legend/Areasdecorta_28_20210.png" /></td><td>2021</td></tr><tr><td style="text-align: center;"><img src="legend/Areasdecorta_28_20221.png" /></td><td>2022</td></tr><tr><td style="text-align: center;"><img src="legend/Areasdecorta_28_20232.png" /></td><td>2023</td></tr><tr><td style="text-align: center;"><img src="legend/Areasdecorta_28_20243.png" /></td><td>2024</td></tr><tr><td style="text-align: center;"><img src="legend/Areasdecorta_28_20254.png" /></td><td>2025</td></tr><tr><td style="text-align: center;"><img src="legend/Areasdecorta_28_20265.png" /></td><td>2026</td></tr><tr><td style="text-align: center;"><img src="legend/Areasdecorta_28_20276.png" /></td><td>2027</td></tr><tr><td style="text-align: center;"><img src="legend/Areasdecorta_28_20287.png" /></td><td>2028</td></tr><tr><td style="text-align: center;"><img src="legend/Areasdecorta_28_20298.png" /></td><td>2029</td></tr><tr><td style="text-align: center;"><img src="legend/Areasdecorta_28_20309.png" /></td><td>2030</td></tr></table>', layer: layer_Areasdecorta_28},]},
+        {label: '<b>CP Alejandro Fracción I y V</b>', collapsed: true, selectAllCheckbox: true, children: [
+            {label: 'Parcelas<br /><table><tr><td style="text-align: center;"><img src="legend/Parcelas_27_0.png" /></td><td></td></tr></table>', layer: layer_Parcelas_27},
+            {label: 'Areas de Corta<br /><table><tr><td style="text-align: center;"><img src="legend/AreasdeCorta_26_20210.png" /></td><td>2021</td></tr><tr><td style="text-align: center;"><img src="legend/AreasdeCorta_26_20221.png" /></td><td>2022</td></tr><tr><td style="text-align: center;"><img src="legend/AreasdeCorta_26_20232.png" /></td><td>2023</td></tr><tr><td style="text-align: center;"><img src="legend/AreasdeCorta_26_20243.png" /></td><td>2024</td></tr><tr><td style="text-align: center;"><img src="legend/AreasdeCorta_26_20254.png" /></td><td>2025</td></tr></table>', layer: layer_AreasdeCorta_26},]},
+        {label: '<b>Ejido Cruz Colorada</b>', collapsed: true, selectAllCheckbox: true, children: [
+            {label: 'Parcelas<br /><table><tr><td style="text-align: center;"><img src="legend/Parcelas_25_0.png" /></td><td></td></tr><tr><td style="text-align: center;"><img src="legend/Parcelas_25_1.png" /></td><td></td></tr></table>', layer: layer_Parcelas_25},
+            {label: 'Áreas de corta<br /><table><tr><td style="text-align: center;"><img src="legend/reasdecorta_24_20160.png" /></td><td>2016</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_24_20171.png" /></td><td>2017</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_24_20182.png" /></td><td>2018</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_24_20193.png" /></td><td>2019</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_24_20204.png" /></td><td>2020</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_24_20215.png" /></td><td>2021</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_24_20226.png" /></td><td>2022</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_24_20237.png" /></td><td>2023</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_24_20248.png" /></td><td>2024</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_24_20259.png" /></td><td>2025</td></tr></table>', layer: layer_reasdecorta_24},]},
+        {label: '<b>Ejido Jonuco</b>', collapsed: true, selectAllCheckbox: true, children: [
+            {label: 'Parcelas<br /><table><tr><td style="text-align: center;"><img src="legend/Parcelas_23_0.png" /></td><td></td></tr><tr><td style="text-align: center;"><img src="legend/Parcelas_23_1.png" /></td><td></td></tr></table>', layer: layer_Parcelas_23},
+            {label: 'Áreas de corta<br /><table><tr><td style="text-align: center;"><img src="legend/reasdecorta_22_20160.png" /></td><td>2016</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_22_20171.png" /></td><td>2017</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_22_20182.png" /></td><td>2018</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_22_20193.png" /></td><td>2019</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_22_20204.png" /></td><td>2020</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_22_20215.png" /></td><td>2021</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_22_20226.png" /></td><td>2022</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_22_20237.png" /></td><td>2023</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_22_20248.png" /></td><td>2024</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_22_20259.png" /></td><td>2025</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_22_10.png" /></td><td></td></tr></table>', layer: layer_reasdecorta_22},]},
+        {label: '<b>Ejido Llano Grande</b>', collapsed: true, selectAllCheckbox: true, children: [
+            {label: 'Parcela<br /><table><tr><td style="text-align: center;"><img src="legend/Parcela_21_0.png" /></td><td></td></tr></table>', layer: layer_Parcela_21},
+            {label: 'Áreas de corta<br /><table><tr><td style="text-align: center;"><img src="legend/reasdecorta_20_20250.png" /></td><td>2025</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_20_20261.png" /></td><td>2026</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_20_20272.png" /></td><td>2027</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_20_20283.png" /></td><td>2028</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_20_20294.png" /></td><td>2029</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_20_20305.png" /></td><td>2030</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_20_20316.png" /></td><td>2031</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_20_20327.png" /></td><td>2032</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_20_20338.png" /></td><td>2033</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_20_20349.png" /></td><td>2034</td></tr></table>', layer: layer_reasdecorta_20},]},
+        {label: '<b>Ejido Peñuelas Pueblo Nuevo</b>', collapsed: true, selectAllCheckbox: true, children: [
+            {label: 'Parcelas<br /><table><tr><td style="text-align: center;"><img src="legend/Parcelas_19_0.png" /></td><td></td></tr></table>', layer: layer_Parcelas_19},
+            {label: 'Áreas de corta<br /><table><tr><td style="text-align: center;"><img src="legend/reasdecorta_18_20200.png" /></td><td>2020</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_18_20211.png" /></td><td>2021</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_18_20232.png" /></td><td>2023</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_18_20243.png" /></td><td>2024</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_18_20254.png" /></td><td>2025</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_18_20265.png" /></td><td>2026</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_18_20276.png" /></td><td>2027</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_18_20287.png" /></td><td>2028</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_18_20298.png" /></td><td>2029</td></tr></table>', layer: layer_reasdecorta_18},]},
+        {label: '<b>Ejido SLV Hidalgo</b>', collapsed: true, selectAllCheckbox: true, children: [
+            {label: 'Parcelas<br /><table><tr><td style="text-align: center;"><img src="legend/Parcelas_17_0.png" /></td><td></td></tr><tr><td style="text-align: center;"><img src="legend/Parcelas_17_1.png" /></td><td></td></tr></table>', layer: layer_Parcelas_17},
+            {label: 'Áreas de corta<br /><table><tr><td style="text-align: center;"><img src="legend/reasdecorta_16_20190.png" /></td><td>2019</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_16_20201.png" /></td><td>2020</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_16_20212.png" /></td><td>2021</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_16_20223.png" /></td><td>2022</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_16_20234.png" /></td><td>2023</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_16_20245.png" /></td><td>2024</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_16_20256.png" /></td><td>2025</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_16_20267.png" /></td><td>2026</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_16_20278.png" /></td><td>2027</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_16_20289.png" /></td><td>2028</td></tr></table>', layer: layer_reasdecorta_16},]},
+        {label: '<b>Ejido SLV Puebla</b>', collapsed: true, selectAllCheckbox: true, children: [
+            {label: 'Parcelas<br /><table><tr><td style="text-align: center;"><img src="legend/Parcelas_15_0.png" /></td><td></td></tr><tr><td style="text-align: center;"><img src="legend/Parcelas_15_1.png" /></td><td></td></tr></table>', layer: layer_Parcelas_15},
+            {label: 'Áreas de corta<br /><table><tr><td style="text-align: center;"><img src="legend/reasdecorta_14_20220.png" /></td><td>2022</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_14_20231.png" /></td><td>2023</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_14_20242.png" /></td><td>2024</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_14_20253.png" /></td><td>2025</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_14_20264.png" /></td><td>2026</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_14_20275.png" /></td><td>2027</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_14_20286.png" /></td><td>2028</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_14_20297.png" /></td><td>2029</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_14_20308.png" /></td><td>2030</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_14_20319.png" /></td><td>2031</td></tr></table>', layer: layer_reasdecorta_14},]},
+        {label: '<b>SM Cerro Alto -Rio Chico</b>', collapsed: true, selectAllCheckbox: true, children: [
+            {label: 'Parcelas<br /><table><tr><td style="text-align: center;"><img src="legend/Parcelas_13_0.png" /></td><td></td></tr><tr><td style="text-align: center;"><img src="legend/Parcelas_13_1.png" /></td><td></td></tr></table>', layer: layer_Parcelas_13},
+            {label: 'Áreas de corta<br /><table><tr><td style="text-align: center;"><img src="legend/reasdecorta_12_20210.png" /></td><td>2021</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_12_20221.png" /></td><td>2022</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_12_20232.png" /></td><td>2023</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_12_20243.png" /></td><td>2024</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_12_20254.png" /></td><td>2025</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_12_20265.png" /></td><td>2026</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_12_20276.png" /></td><td>2027</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_12_20287.png" /></td><td>2028</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_12_20298.png" /></td><td>2029</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_12_20309.png" /></td><td>2030</td></tr></table>', layer: layer_reasdecorta_12},]},
+        {label: '<b>SM Gorondona</b>', collapsed: true, selectAllCheckbox: true, children: [
+            {label: 'Parcelas<br /><table><tr><td style="text-align: center;"><img src="legend/Parcelas_11_0.png" /></td><td></td></tr><tr><td style="text-align: center;"><img src="legend/Parcelas_11_1.png" /></td><td></td></tr></table>', layer: layer_Parcelas_11},
+            {label: 'Áreas de corta<br /><table><tr><td style="text-align: center;"><img src="legend/reasdecorta_10_20170.png" /></td><td>2017</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_10_20181.png" /></td><td>2018</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_10_20192.png" /></td><td>2019</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_10_20203.png" /></td><td>2020</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_10_20214.png" /></td><td>2021</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_10_20225.png" /></td><td>2022</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_10_20246.png" /></td><td>2024</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_10_20257.png" /></td><td>2025</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_10_20268.png" /></td><td>2026</td></tr></table>', layer: layer_reasdecorta_10},]},
+        {label: '<b>SM Melada</b>', collapsed: true, selectAllCheckbox: true, children: [
+            {label: 'Parcelas<br /><table><tr><td style="text-align: center;"><img src="legend/Parcelas_9_0.png" /></td><td></td></tr><tr><td style="text-align: center;"><img src="legend/Parcelas_9_1.png" /></td><td></td></tr></table>', layer: layer_Parcelas_9},
+            {label: 'Áreas de corta<br /><table><tr><td style="text-align: center;"><img src="legend/reasdecorta_8_20220.png" /></td><td>2022</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_8_20231.png" /></td><td>2023</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_8_20242.png" /></td><td>2024</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_8_20253.png" /></td><td>2025</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_8_20264.png" /></td><td>2026</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_8_20275.png" /></td><td>2027</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_8_20286.png" /></td><td>2028</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_8_20297.png" /></td><td>2029</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_8_20308.png" /></td><td>2030</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_8_20319.png" /></td><td>2031</td></tr></table>', layer: layer_reasdecorta_8},]},
+        {label: '<b>SM Mirador</b>', collapsed: true, selectAllCheckbox: true, children: [
+            {label: 'Parcelas<br /><table><tr><td style="text-align: center;"><img src="legend/Parcelas_7_0.png" /></td><td></td></tr><tr><td style="text-align: center;"><img src="legend/Parcelas_7_1.png" /></td><td></td></tr></table>', layer: layer_Parcelas_7},
+            {label: 'Áreas de corta<br /><table><tr><td style="text-align: center;"><img src="legend/reasdecorta_6_20180.png" /></td><td>2018</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_6_20191.png" /></td><td>2019</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_6_20202.png" /></td><td>2020</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_6_20213.png" /></td><td>2021</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_6_20224.png" /></td><td>2022</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_6_20235.png" /></td><td>2023</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_6_20246.png" /></td><td>2024</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_6_20257.png" /></td><td>2025</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_6_20268.png" /></td><td>2026</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_6_20279.png" /></td><td>2027</td></tr></table>', layer: layer_reasdecorta_6},]},
+        {label: '<b>SM Los Organos</b>', collapsed: true, selectAllCheckbox: true, children: [
+            {label: '<img src="legend/Parcelas_5.png" /> Parcelas', layer: layer_Parcelas_5},
+            {label: 'Áreas de corta<br /><table><tr><td style="text-align: center;"><img src="legend/reasdecorta_4_20120.png" /></td><td>2012</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_4_20131.png" /></td><td>2013</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_4_20142.png" /></td><td>2014</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_4_20153.png" /></td><td>2015</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_4_20174.png" /></td><td>2017</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_4_20185.png" /></td><td>2018</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_4_20196.png" /></td><td>2019</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_4_20207.png" /></td><td>2020</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_4_20218.png" /></td><td>2021</td></tr></table>', layer: layer_reasdecorta_4},]},
+        {label: '<b>Ejido Ocojala</b>', collapsed: true, selectAllCheckbox: true, children: [
+            {label: '<img src="legend/Parcelas_3.png" /> Parcelas', layer: layer_Parcelas_3},
+            {label: 'Áreas de corta<br /><table><tr><td style="text-align: center;"><img src="legend/reasdecorta_2_20130.png" /></td><td>2013</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_2_20141.png" /></td><td>2014</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_2_20152.png" /></td><td>2015</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_2_20163.png" /></td><td>2016</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_2_20174.png" /></td><td>2017</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_2_20185.png" /></td><td>2018</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_2_20196.png" /></td><td>2019</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_2_20207.png" /></td><td>2020</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_2_20218.png" /></td><td>2021</td></tr><tr><td style="text-align: center;"><img src="legend/reasdecorta_2_20229.png" /></td><td>2022</td></tr></table>', layer: layer_reasdecorta_2},]},
+            {label: "Google Satellite", layer: layer_GoogleSatellite_1},
+            {label: '<img src="legend/AreasdeProyecto_0.png" /> Areas de Proyecto', layer: layer_AreasdeProyecto_0},]
+        var lay = L.control.layers.tree(null, overlaysTree,{
+            //namedToggle: true,
+            //selectorBack: false,
+            //closedSymbol: '&#8862; &#x1f5c0;',
+            //openedSymbol: '&#8863; &#x1f5c1;',
+            //collapseAll: 'Collapse all',
+            //expandAll: 'Expand all',
+            collapsed: true,
+        });
+        lay.addTo(map);
+        map.on("zoomend", function(){
+
+                if (map.hasLayer(layer_reasdecorta_2)) {
+                    if (map.getZoom() <= 19 && map.getZoom() >= 17) {
+                        layer_reasdecorta_2.eachLayer(function (layer) {
+                            layer.openTooltip();
+                        });
+                    } else {
+                        layer_reasdecorta_2.eachLayer(function (layer) {
+                            layer.closeTooltip();
+                        });
+                    }
+                }
+                if (map.hasLayer(layer_reasdecorta_4)) {
+                    if (map.getZoom() <= 19 && map.getZoom() >= 17) {
+                        layer_reasdecorta_4.eachLayer(function (layer) {
+                            layer.openTooltip();
+                        });
+                    } else {
+                        layer_reasdecorta_4.eachLayer(function (layer) {
+                            layer.closeTooltip();
+                        });
+                    }
+                }
+                if (map.hasLayer(layer_reasdecorta_6)) {
+                    if (map.getZoom() <= 19 && map.getZoom() >= 17) {
+                        layer_reasdecorta_6.eachLayer(function (layer) {
+                            layer.openTooltip();
+                        });
+                    } else {
+                        layer_reasdecorta_6.eachLayer(function (layer) {
+                            layer.closeTooltip();
+                        });
+                    }
+                }
+                if (map.hasLayer(layer_reasdecorta_8)) {
+                    if (map.getZoom() <= 19 && map.getZoom() >= 17) {
+                        layer_reasdecorta_8.eachLayer(function (layer) {
+                            layer.openTooltip();
+                        });
+                    } else {
+                        layer_reasdecorta_8.eachLayer(function (layer) {
+                            layer.closeTooltip();
+                        });
+                    }
+                }
+                if (map.hasLayer(layer_reasdecorta_10)) {
+                    if (map.getZoom() <= 19 && map.getZoom() >= 17) {
+                        layer_reasdecorta_10.eachLayer(function (layer) {
+                            layer.openTooltip();
+                        });
+                    } else {
+                        layer_reasdecorta_10.eachLayer(function (layer) {
+                            layer.closeTooltip();
+                        });
+                    }
+                }
+                if (map.hasLayer(layer_reasdecorta_12)) {
+                    if (map.getZoom() <= 19 && map.getZoom() >= 17) {
+                        layer_reasdecorta_12.eachLayer(function (layer) {
+                            layer.openTooltip();
+                        });
+                    } else {
+                        layer_reasdecorta_12.eachLayer(function (layer) {
+                            layer.closeTooltip();
+                        });
+                    }
+                }
+                if (map.hasLayer(layer_reasdecorta_14)) {
+                    if (map.getZoom() <= 19 && map.getZoom() >= 17) {
+                        layer_reasdecorta_14.eachLayer(function (layer) {
+                            layer.openTooltip();
+                        });
+                    } else {
+                        layer_reasdecorta_14.eachLayer(function (layer) {
+                            layer.closeTooltip();
+                        });
+                    }
+                }
+                if (map.hasLayer(layer_reasdecorta_16)) {
+                    if (map.getZoom() <= 19 && map.getZoom() >= 17) {
+                        layer_reasdecorta_16.eachLayer(function (layer) {
+                            layer.openTooltip();
+                        });
+                    } else {
+                        layer_reasdecorta_16.eachLayer(function (layer) {
+                            layer.closeTooltip();
+                        });
+                    }
+                }
+                if (map.hasLayer(layer_reasdecorta_18)) {
+                    if (map.getZoom() <= 19 && map.getZoom() >= 17) {
+                        layer_reasdecorta_18.eachLayer(function (layer) {
+                            layer.openTooltip();
+                        });
+                    } else {
+                        layer_reasdecorta_18.eachLayer(function (layer) {
+                            layer.closeTooltip();
+                        });
+                    }
+                }
+                if (map.hasLayer(layer_reasdecorta_20)) {
+                    if (map.getZoom() <= 19 && map.getZoom() >= 17) {
+                        layer_reasdecorta_20.eachLayer(function (layer) {
+                            layer.openTooltip();
+                        });
+                    } else {
+                        layer_reasdecorta_20.eachLayer(function (layer) {
+                            layer.closeTooltip();
+                        });
+                    }
+                }
+                if (map.hasLayer(layer_reasdecorta_22)) {
+                    if (map.getZoom() <= 19 && map.getZoom() >= 17) {
+                        layer_reasdecorta_22.eachLayer(function (layer) {
+                            layer.openTooltip();
+                        });
+                    } else {
+                        layer_reasdecorta_22.eachLayer(function (layer) {
+                            layer.closeTooltip();
+                        });
+                    }
+                }
+                if (map.hasLayer(layer_reasdecorta_24)) {
+                    if (map.getZoom() <= 19 && map.getZoom() >= 17) {
+                        layer_reasdecorta_24.eachLayer(function (layer) {
+                            layer.openTooltip();
+                        });
+                    } else {
+                        layer_reasdecorta_24.eachLayer(function (layer) {
+                            layer.closeTooltip();
+                        });
+                    }
+                }
+                if (map.hasLayer(layer_AreasdeCorta_26)) {
+                    if (map.getZoom() <= 19 && map.getZoom() >= 17) {
+                        layer_AreasdeCorta_26.eachLayer(function (layer) {
+                            layer.openTooltip();
+                        });
+                    } else {
+                        layer_AreasdeCorta_26.eachLayer(function (layer) {
+                            layer.closeTooltip();
+                        });
+                    }
+                }
+                if (map.hasLayer(layer_Parcelas_27)) {
+                    if (map.getZoom() <= 19 && map.getZoom() >= 16) {
+                        layer_Parcelas_27.eachLayer(function (layer) {
+                            layer.openTooltip();
+                        });
+                    } else {
+                        layer_Parcelas_27.eachLayer(function (layer) {
+                            layer.closeTooltip();
+                        });
+                    }
+                }
+                if (map.hasLayer(layer_Areasdecorta_28)) {
+                    if (map.getZoom() <= 19 && map.getZoom() >= 17) {
+                        layer_Areasdecorta_28.eachLayer(function (layer) {
+                            layer.openTooltip();
+                        });
+                    } else {
+                        layer_Areasdecorta_28.eachLayer(function (layer) {
+                            layer.closeTooltip();
+                        });
+                    }
+                }
+                if (map.hasLayer(layer_Parcelas_29)) {
+                    if (map.getZoom() <= 19 && map.getZoom() >= 16) {
+                        layer_Parcelas_29.eachLayer(function (layer) {
+                            layer.openTooltip();
+                        });
+                    } else {
+                        layer_Parcelas_29.eachLayer(function (layer) {
+                            layer.closeTooltip();
+                        });
+                    }
+                }
+        });
+        setBounds();
+        var i = 0;
+        layer_reasdecorta_2.eachLayer(function(layer) {
+            var context = {
+                feature: layer.feature,
+                variables: {}
+            };
+            layer.bindTooltip((layer.feature.properties['Año'] !== null?String('<div style="color: #ffffff; font-size: 10pt; font-weight: bold; font-family: \'Open Sans\', sans-serif;">' + layer.feature.properties['Año']) + '</div>':''), {permanent: true, offset: [-0, -16], className: 'css_reasdecorta_2'});
+            labels.push(layer);
+            totalMarkers += 1;
+              layer.added = true;
+              addLabel(layer, i);
+              i++;
+        });
+        var i = 0;
+        layer_reasdecorta_4.eachLayer(function(layer) {
+            var context = {
+                feature: layer.feature,
+                variables: {}
+            };
+            layer.bindTooltip((layer.feature.properties['Anualidad'] !== null?String('<div style="color: #ffffff; font-size: 10pt; font-weight: bold; font-family: \'Open Sans\', sans-serif;">' + layer.feature.properties['Anualidad']) + '</div>':''), {permanent: true, offset: [-0, -16], className: 'css_reasdecorta_4'});
+            labels.push(layer);
+            totalMarkers += 1;
+              layer.added = true;
+              addLabel(layer, i);
+              i++;
+        });
+        var i = 0;
+        layer_reasdecorta_6.eachLayer(function(layer) {
+            var context = {
+                feature: layer.feature,
+                variables: {}
+            };
+            layer.bindTooltip((layer.feature.properties['Anualidad'] !== null?String('<div style="color: #ffffff; font-size: 10pt; font-weight: bold; font-family: \'Open Sans\', sans-serif;">' + layer.feature.properties['Anualidad']) + '</div>':''), {permanent: true, offset: [-0, -16], className: 'css_reasdecorta_6'});
+            labels.push(layer);
+            totalMarkers += 1;
+              layer.added = true;
+              addLabel(layer, i);
+              i++;
+        });
+        var i = 0;
+        layer_reasdecorta_8.eachLayer(function(layer) {
+            var context = {
+                feature: layer.feature,
+                variables: {}
+            };
+            layer.bindTooltip((layer.feature.properties['Anualidad'] !== null?String('<div style="color: #ffffff; font-size: 10pt; font-weight: bold; font-family: \'Open Sans\', sans-serif;">' + layer.feature.properties['Anualidad']) + '</div>':''), {permanent: true, offset: [-0, -16], className: 'css_reasdecorta_8'});
+            labels.push(layer);
+            totalMarkers += 1;
+              layer.added = true;
+              addLabel(layer, i);
+              i++;
+        });
+        var i = 0;
+        layer_reasdecorta_10.eachLayer(function(layer) {
+            var context = {
+                feature: layer.feature,
+                variables: {}
+            };
+            layer.bindTooltip((layer.feature.properties['Anualidad'] !== null?String('<div style="color: #ffffff; font-size: 10pt; font-weight: bold; font-family: \'Open Sans\', sans-serif;">' + layer.feature.properties['Anualidad']) + '</div>':''), {permanent: true, offset: [-0, -16], className: 'css_reasdecorta_10'});
+            labels.push(layer);
+            totalMarkers += 1;
+              layer.added = true;
+              addLabel(layer, i);
+              i++;
+        });
+        var i = 0;
+        layer_reasdecorta_12.eachLayer(function(layer) {
+            var context = {
+                feature: layer.feature,
+                variables: {}
+            };
+            layer.bindTooltip((layer.feature.properties['ANUALIDAD'] !== null?String('<div style="color: #ffffff; font-size: 10pt; font-weight: bold; font-family: \'Open Sans\', sans-serif;">' + layer.feature.properties['ANUALIDAD']) + '</div>':''), {permanent: true, offset: [-0, -16], className: 'css_reasdecorta_12'});
+            labels.push(layer);
+            totalMarkers += 1;
+              layer.added = true;
+              addLabel(layer, i);
+              i++;
+        });
+        var i = 0;
+        layer_reasdecorta_14.eachLayer(function(layer) {
+            var context = {
+                feature: layer.feature,
+                variables: {}
+            };
+            layer.bindTooltip((layer.feature.properties['Anualidad'] !== null?String('<div style="color: #ffffff; font-size: 10pt; font-weight: bold; font-family: \'Open Sans\', sans-serif;">' + layer.feature.properties['Anualidad']) + '</div>':''), {permanent: true, offset: [-0, -16], className: 'css_reasdecorta_14'});
+            labels.push(layer);
+            totalMarkers += 1;
+              layer.added = true;
+              addLabel(layer, i);
+              i++;
+        });
+        var i = 0;
+        layer_reasdecorta_16.eachLayer(function(layer) {
+            var context = {
+                feature: layer.feature,
+                variables: {}
+            };
+            layer.bindTooltip((layer.feature.properties['Anualidad'] !== null?String('<div style="color: #ffffff; font-size: 10pt; font-weight: bold; font-family: \'Open Sans\', sans-serif;">' + layer.feature.properties['Anualidad']) + '</div>':''), {permanent: true, offset: [-0, -16], className: 'css_reasdecorta_16'});
+            labels.push(layer);
+            totalMarkers += 1;
+              layer.added = true;
+              addLabel(layer, i);
+              i++;
+        });
+        var i = 0;
+        layer_reasdecorta_18.eachLayer(function(layer) {
+            var context = {
+                feature: layer.feature,
+                variables: {}
+            };
+            layer.bindTooltip((layer.feature.properties['AnualMod26'] !== null?String('<div style="color: #ffffff; font-size: 10pt; font-weight: bold; font-family: \'Open Sans\', sans-serif;">' + layer.feature.properties['AnualMod26']) + '</div>':''), {permanent: true, offset: [-0, -16], className: 'css_reasdecorta_18'});
+            labels.push(layer);
+            totalMarkers += 1;
+              layer.added = true;
+              addLabel(layer, i);
+              i++;
+        });
+        var i = 0;
+        layer_reasdecorta_20.eachLayer(function(layer) {
+            var context = {
+                feature: layer.feature,
+                variables: {}
+            };
+            layer.bindTooltip((layer.feature.properties['ANUALIDAD'] !== null?String('<div style="color: #ffffff; font-size: 10pt; font-weight: bold; font-family: \'Open Sans\', sans-serif;">' + layer.feature.properties['ANUALIDAD']) + '</div>':''), {permanent: true, offset: [-0, -16], className: 'css_reasdecorta_20'});
+            labels.push(layer);
+            totalMarkers += 1;
+              layer.added = true;
+              addLabel(layer, i);
+              i++;
+        });
+        var i = 0;
+        layer_reasdecorta_22.eachLayer(function(layer) {
+            var context = {
+                feature: layer.feature,
+                variables: {}
+            };
+            layer.bindTooltip((layer.feature.properties['Anualidad'] !== null?String('<div style="color: #ffffff; font-size: 10pt; font-weight: bold; font-family: \'Open Sans\', sans-serif;">' + layer.feature.properties['Anualidad']) + '</div>':''), {permanent: true, offset: [-0, -16], className: 'css_reasdecorta_22'});
+            labels.push(layer);
+            totalMarkers += 1;
+              layer.added = true;
+              addLabel(layer, i);
+              i++;
+        });
+        var i = 0;
+        layer_reasdecorta_24.eachLayer(function(layer) {
+            var context = {
+                feature: layer.feature,
+                variables: {}
+            };
+            layer.bindTooltip((layer.feature.properties['AÑO'] !== null?String('<div style="color: #ffffff; font-size: 10pt; font-family: \'Open Sans\', sans-serif;">' + layer.feature.properties['AÑO']) + '</div>':''), {permanent: true, offset: [-0, -16], className: 'css_reasdecorta_24'});
+            labels.push(layer);
+            totalMarkers += 1;
+              layer.added = true;
+              addLabel(layer, i);
+              i++;
+        });
+        var i = 0;
+        layer_AreasdeCorta_26.eachLayer(function(layer) {
+            var context = {
+                feature: layer.feature,
+                variables: {}
+            };
+            layer.bindTooltip((layer.feature.properties['Año'] !== null?String('<div style="color: #ffffff; font-size: 10pt; font-weight: bold; font-style: italic; font-family: \'Open Sans\', sans-serif;">' + layer.feature.properties['Año']) + '</div>':''), {permanent: true, offset: [-0, -16], className: 'css_AreasdeCorta_26'});
+            labels.push(layer);
+            totalMarkers += 1;
+              layer.added = true;
+              addLabel(layer, i);
+              i++;
+        });
+        var i = 0;
+        layer_Areasdecorta_28.eachLayer(function(layer) {
+            var context = {
+                feature: layer.feature,
+                variables: {}
+            };
+            layer.bindTooltip((layer.feature.properties['Anualidad'] !== null?String('<div style="color: #ffffff; font-size: 10pt; font-weight: bold; font-style: italic; font-family: \'Open Sans\', sans-serif;">' + layer.feature.properties['Anualidad']) + '</div>':''), {permanent: true, offset: [-0, -16], className: 'css_Areasdecorta_28'});
+            labels.push(layer);
+            totalMarkers += 1;
+              layer.added = true;
+              addLabel(layer, i);
+              i++;
+        });
+                if (map.hasLayer(layer_reasdecorta_2)) {
+                    if (map.getZoom() <= 19 && map.getZoom() >= 17) {
+                        layer_reasdecorta_2.eachLayer(function (layer) {
+                            layer.openTooltip();
+                        });
+                    } else {
+                        layer_reasdecorta_2.eachLayer(function (layer) {
+                            layer.closeTooltip();
+                        });
+                    }
+                }
+                if (map.hasLayer(layer_reasdecorta_4)) {
+                    if (map.getZoom() <= 19 && map.getZoom() >= 17) {
+                        layer_reasdecorta_4.eachLayer(function (layer) {
+                            layer.openTooltip();
+                        });
+                    } else {
+                        layer_reasdecorta_4.eachLayer(function (layer) {
+                            layer.closeTooltip();
+                        });
+                    }
+                }
+                if (map.hasLayer(layer_reasdecorta_6)) {
+                    if (map.getZoom() <= 19 && map.getZoom() >= 17) {
+                        layer_reasdecorta_6.eachLayer(function (layer) {
+                            layer.openTooltip();
+                        });
+                    } else {
+                        layer_reasdecorta_6.eachLayer(function (layer) {
+                            layer.closeTooltip();
+                        });
+                    }
+                }
+                if (map.hasLayer(layer_reasdecorta_8)) {
+                    if (map.getZoom() <= 19 && map.getZoom() >= 17) {
+                        layer_reasdecorta_8.eachLayer(function (layer) {
+                            layer.openTooltip();
+                        });
+                    } else {
+                        layer_reasdecorta_8.eachLayer(function (layer) {
+                            layer.closeTooltip();
+                        });
+                    }
+                }
+                if (map.hasLayer(layer_reasdecorta_10)) {
+                    if (map.getZoom() <= 19 && map.getZoom() >= 17) {
+                        layer_reasdecorta_10.eachLayer(function (layer) {
+                            layer.openTooltip();
+                        });
+                    } else {
+                        layer_reasdecorta_10.eachLayer(function (layer) {
+                            layer.closeTooltip();
+                        });
+                    }
+                }
+                if (map.hasLayer(layer_reasdecorta_12)) {
+                    if (map.getZoom() <= 19 && map.getZoom() >= 17) {
+                        layer_reasdecorta_12.eachLayer(function (layer) {
+                            layer.openTooltip();
+                        });
+                    } else {
+                        layer_reasdecorta_12.eachLayer(function (layer) {
+                            layer.closeTooltip();
+                        });
+                    }
+                }
+                if (map.hasLayer(layer_reasdecorta_14)) {
+                    if (map.getZoom() <= 19 && map.getZoom() >= 17) {
+                        layer_reasdecorta_14.eachLayer(function (layer) {
+                            layer.openTooltip();
+                        });
+                    } else {
+                        layer_reasdecorta_14.eachLayer(function (layer) {
+                            layer.closeTooltip();
+                        });
+                    }
+                }
+                if (map.hasLayer(layer_reasdecorta_16)) {
+                    if (map.getZoom() <= 19 && map.getZoom() >= 17) {
+                        layer_reasdecorta_16.eachLayer(function (layer) {
+                            layer.openTooltip();
+                        });
+                    } else {
+                        layer_reasdecorta_16.eachLayer(function (layer) {
+                            layer.closeTooltip();
+                        });
+                    }
+                }
+                if (map.hasLayer(layer_reasdecorta_18)) {
+                    if (map.getZoom() <= 19 && map.getZoom() >= 17) {
+                        layer_reasdecorta_18.eachLayer(function (layer) {
+                            layer.openTooltip();
+                        });
+                    } else {
+                        layer_reasdecorta_18.eachLayer(function (layer) {
+                            layer.closeTooltip();
+                        });
+                    }
+                }
+                if (map.hasLayer(layer_reasdecorta_20)) {
+                    if (map.getZoom() <= 19 && map.getZoom() >= 17) {
+                        layer_reasdecorta_20.eachLayer(function (layer) {
+                            layer.openTooltip();
+                        });
+                    } else {
+                        layer_reasdecorta_20.eachLayer(function (layer) {
+                            layer.closeTooltip();
+                        });
+                    }
+                }
+                if (map.hasLayer(layer_reasdecorta_22)) {
+                    if (map.getZoom() <= 19 && map.getZoom() >= 17) {
+                        layer_reasdecorta_22.eachLayer(function (layer) {
+                            layer.openTooltip();
+                        });
+                    } else {
+                        layer_reasdecorta_22.eachLayer(function (layer) {
+                            layer.closeTooltip();
+                        });
+                    }
+                }
+                if (map.hasLayer(layer_reasdecorta_24)) {
+                    if (map.getZoom() <= 19 && map.getZoom() >= 17) {
+                        layer_reasdecorta_24.eachLayer(function (layer) {
+                            layer.openTooltip();
+                        });
+                    } else {
+                        layer_reasdecorta_24.eachLayer(function (layer) {
+                            layer.closeTooltip();
+                        });
+                    }
+                }
+                if (map.hasLayer(layer_AreasdeCorta_26)) {
+                    if (map.getZoom() <= 19 && map.getZoom() >= 17) {
+                        layer_AreasdeCorta_26.eachLayer(function (layer) {
+                            layer.openTooltip();
+                        });
+                    } else {
+                        layer_AreasdeCorta_26.eachLayer(function (layer) {
+                            layer.closeTooltip();
+                        });
+                    }
+                }
+                if (map.hasLayer(layer_Parcelas_27)) {
+                    if (map.getZoom() <= 19 && map.getZoom() >= 16) {
+                        layer_Parcelas_27.eachLayer(function (layer) {
+                            layer.openTooltip();
+                        });
+                    } else {
+                        layer_Parcelas_27.eachLayer(function (layer) {
+                            layer.closeTooltip();
+                        });
+                    }
+                }
+                if (map.hasLayer(layer_Areasdecorta_28)) {
+                    if (map.getZoom() <= 19 && map.getZoom() >= 17) {
+                        layer_Areasdecorta_28.eachLayer(function (layer) {
+                            layer.openTooltip();
+                        });
+                    } else {
+                        layer_Areasdecorta_28.eachLayer(function (layer) {
+                            layer.closeTooltip();
+                        });
+                    }
+                }
+                if (map.hasLayer(layer_Parcelas_29)) {
+                    if (map.getZoom() <= 19 && map.getZoom() >= 16) {
+                        layer_Parcelas_29.eachLayer(function (layer) {
+                            layer.openTooltip();
+                        });
+                    } else {
+                        layer_Parcelas_29.eachLayer(function (layer) {
+                            layer.closeTooltip();
+                        });
+                    }
+                }
+        map.addControl(new L.Control.Search({
+            layer: layer_AreasdeProyecto_0,
+            initial: false,
+            hideMarkerOnCollapse: true,
+            propertyName: 'layer'}));
+        if (typeof url === 'undefined') {
+            document.getElementsByClassName('search-button')[0].className += ' fa fa-binoculars';
+        } else {
+            document.getElementsByClassName('search-button')[1].className += ' fa fa-binoculars';
+        }
+        resetLabels([layer_reasdecorta_2,layer_reasdecorta_4,layer_reasdecorta_6,layer_reasdecorta_8,layer_reasdecorta_10,layer_reasdecorta_12,layer_reasdecorta_14,layer_reasdecorta_16,layer_reasdecorta_18,layer_reasdecorta_20,layer_reasdecorta_22,layer_reasdecorta_24,layer_AreasdeCorta_26,layer_Parcelas_27,layer_Areasdecorta_28,layer_Parcelas_29]);
+        map.on("zoomend", function(){
+            resetLabels([layer_reasdecorta_2,layer_reasdecorta_4,layer_reasdecorta_6,layer_reasdecorta_8,layer_reasdecorta_10,layer_reasdecorta_12,layer_reasdecorta_14,layer_reasdecorta_16,layer_reasdecorta_18,layer_reasdecorta_20,layer_reasdecorta_22,layer_reasdecorta_24,layer_AreasdeCorta_26,layer_Parcelas_27,layer_Areasdecorta_28,layer_Parcelas_29]);
+        });
+        map.on("layeradd", function(){
+            resetLabels([layer_reasdecorta_2,layer_reasdecorta_4,layer_reasdecorta_6,layer_reasdecorta_8,layer_reasdecorta_10,layer_reasdecorta_12,layer_reasdecorta_14,layer_reasdecorta_16,layer_reasdecorta_18,layer_reasdecorta_20,layer_reasdecorta_22,layer_reasdecorta_24,layer_AreasdeCorta_26,layer_Parcelas_27,layer_Areasdecorta_28,layer_Parcelas_29]);
+        });
+        map.on("layerremove", function(){
+            resetLabels([layer_reasdecorta_2,layer_reasdecorta_4,layer_reasdecorta_6,layer_reasdecorta_8,layer_reasdecorta_10,layer_reasdecorta_12,layer_reasdecorta_14,layer_reasdecorta_16,layer_reasdecorta_18,layer_reasdecorta_20,layer_reasdecorta_22,layer_reasdecorta_24,layer_AreasdeCorta_26,layer_Parcelas_27,layer_Areasdecorta_28,layer_Parcelas_29]);
+        });
+        </script>        
+    </body>
+</html>
